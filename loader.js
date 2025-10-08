@@ -1,5 +1,5 @@
-import { onMessageUpsert } from "./commands/onMessageUpsert.js";
 import { config } from "./config/config.js";
+import { onMessageUpsert } from "./middleware/onMessageUpsert.js";
 
 export const loader = async (socket) => {
   socket.ev.on("messages.upsert", async ({ type, messages }) => {

@@ -1,20 +1,59 @@
 import { downloadMediaMessage } from "baileys";
 import chalk from "chalk";
 import "dotenv/config";
+import { ping } from "../commands/ping.js";
+import { sticker } from "../commands/sticker.js";
 import { appLogger } from "../config/logs.js";
-import { sticker } from "./sticker.js";
 
 export const onMessageUpsert = async (socket, { type, messages }) => {
   if (messages.length === 0) return;
   if (type == "notify") {
     // Obtain the target JID and try to convert to LID if it's a PN
     let targetJid = messages[0].key.remoteJid;
+    const messageToQuote = messages[0];
+    let targetMessage = messages[0];
+
+    if (messages[0].message?.extendedTextMessage?.contextInfo?.quotedMessage) {
+      const quotedInfo = messages[0].message.extendedTextMessage.contextInfo;
+      targetMessage = {
+        key: {
+          remoteJid: messages[0].key.remoteJid,
+          id: quotedInfo.stanzaId,
+          participant: quotedInfo.participant || messages[0].key.remoteJid,
+        },
+        message: quotedInfo.quotedMessage,
+      };
+    }
+
     const isLid = targetJid.includes("@lid");
     const messageText = messages[0].message?.conversation;
     const caption =
       messages[0].message?.imageMessage?.caption ||
-      messages[0].message?.videoMessage?.caption;
+      messages[0].message?.videoMessage?.caption ||
+      messages[0].message?.extendedTextMessage?.contextInfo?.quotedMessage
+        ?.imageMessage?.caption;
+
+    // TODO: Add suport to video message
+    const image =
+      messages[0].message?.imageMessage ||
+      messages[0].message?.extendedTextMessage?.contextInfo?.quotedMessage
+        ?.imageMessage;
     const commandText = messageText || caption;
+
+    if (!image) {
+      await socket.sendMessage(
+        targetJid,
+        { text: "Por favor, envie uma imagem para criar um sticker." },
+        { quoted: messageToQuote }
+      );
+      return;
+    } else {
+      await socket.sendMessage(
+        targetJid,
+        { text: "🤖 Processando sua imagem, aguarde..." },
+        { quoted: messageToQuote }
+      );
+    }
 
     if (!isLid) {
       const lid = socket.signalRepository?.lidMapping?.getLIDForPN(targetJid);
@@ -55,15 +94,15 @@ export const onMessageUpsert = async (socket, { type, messages }) => {
       const command = commandBody.split(" ")[0].toLowerCase();
 
       if (command === "s" || command === "sticker") {
-        if (messages[0].message.imageMessage) {
+        if (image) {
           try {
             const buffer = await downloadMediaMessage(
-              messages[0],
+              targetMessage,
               "buffer",
               {},
               {}
             );
-            await sticker(socket, targetJid, buffer);
+            await sticker(socket, targetJid, name, buffer);
           } catch (err) {
             appLogger.error("Erro ao baixar mídia para sticker", {
               error: err,
@@ -72,6 +111,8 @@ export const onMessageUpsert = async (socket, { type, messages }) => {
         } else {
           appLogger.warn("Comando sticker requer uma imagem");
         }
+      } else if (command === "ping") {
+        await ping(socket, targetJid);
       } else {
         appLogger.warn("Comando desconhecido: " + command);
       }
