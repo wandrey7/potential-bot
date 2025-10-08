@@ -4,7 +4,6 @@ import makeWASocket, {
   fetchLatestBaileysVersion,
   useMultiFileAuthState,
 } from "baileys";
-import "dotenv/config";
 import NodeCache from "node-cache";
 import path from "path";
 import QRCode from "qrcode";
