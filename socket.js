@@ -34,8 +34,25 @@ export const connect = async () => {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      console.log(await QRCode.toString(qr, { type: "terminal", small: true }));
-      appLogger.info("QR Code received, scan it to authenticate.");
+      try {
+        const qrCode = await QRCode.toString(qr, {
+          type: "terminal",
+          small: true,
+        });
+        console.log(
+          "\n\x1b[32m%s\x1b[0m",
+          "SCAN THE QR CODE BELOW TO CONNECT:"
+        );
+        console.log(qrCode);
+        console.log(
+          "\x1b[33m%s\x1b[0m",
+          "Note: QR code will expire in 60 seconds"
+        );
+        appLogger.info("QR Code received, scan it to authenticate.");
+      } catch (error) {
+        console.error("Error generating QR code:", error.message);
+        appLogger.error("Error generating QR code:", error.message);
+      }
     }
 
     if (connection === "close") {
