@@ -2,7 +2,7 @@ import { downloadMediaMessage } from "baileys";
 import chalk from "chalk";
 import { ping } from "../commands/ping.js";
 import { sticker } from "../commands/sticker.js";
-import { config } from "../config/config.js";
+import { PREFIX } from "../config/config.js";
 import { appLogger } from "../config/logs.js";
 
 export const onMessageUpsert = async (socket, { type, messages }) => {
@@ -40,21 +40,6 @@ export const onMessageUpsert = async (socket, { type, messages }) => {
         ?.imageMessage;
     const commandText = messageText || caption;
 
-    if (!image) {
-      await socket.sendMessage(
-        targetJid,
-        { text: "Por favor, envie uma imagem para criar um sticker." },
-        { quoted: messageToQuote }
-      );
-      return;
-    } else {
-      await socket.sendMessage(
-        targetJid,
-        { text: "🤖 Processando sua imagem, aguarde..." },
-        { quoted: messageToQuote }
-      );
-    }
-
     if (!isLid) {
       const lid = socket.signalRepository?.lidMapping?.getLIDForPN(targetJid);
       if (lid) {
@@ -89,11 +74,25 @@ export const onMessageUpsert = async (socket, { type, messages }) => {
       isLid,
     });
 
-    if (commandText && commandText.startsWith(config.PREFIX)) {
-      const commandBody = commandText.slice(config.PREFIX.length).trim();
+    if (commandText && commandText.startsWith(PREFIX)) {
+      const commandBody = commandText.slice(PREFIX.length).trim();
       const command = commandBody.split(" ")[0].toLowerCase();
 
       if (command === "s" || command === "sticker") {
+        if (!image) {
+          await socket.sendMessage(
+            targetJid,
+            { text: "Por favor, envie uma imagem para criar um sticker." },
+            { quoted: messageToQuote }
+          );
+          return;
+        } else {
+          await socket.sendMessage(
+            targetJid,
+            { text: "🤖 Processando sua imagem, aguarde..." },
+            { quoted: messageToQuote }
+          );
+        }
         if (image) {
           try {
             const buffer = await downloadMediaMessage(
