@@ -26,7 +26,10 @@ export const onMessageUpsert = async (socket, { type, messages }) => {
     }
 
     const isLid = targetJid.includes("@lid");
-    const messageText = messages[0].message?.conversation;
+    const messageText =
+      messages[0].message?.conversation ||
+      messages[0].message?.extendedTextMessage?.text;
+
     const caption =
       messages[0].message?.imageMessage?.caption ||
       messages[0].message?.videoMessage?.caption ||
@@ -50,33 +53,29 @@ export const onMessageUpsert = async (socket, { type, messages }) => {
     const from = targetJid.split("@")[0];
     const name = messages[0].pushName || "Desconhecido";
 
-    console.log(
-      "\n" +
-        chalk.green.bold("📩 Nova mensagem recebida!") +
-        "\n" +
-        chalk.blue("👤 De: ") +
-        from +
-        "\n" +
-        chalk.blue("📛 Nome: ") +
-        name +
-        "\n" +
-        chalk.blue("📝 Mensagem: ") +
-        (commandText || "Mídia") +
-        "\n" +
-        chalk.gray("----------------------------------------")
-    );
-
-    appLogger.info({
-      event: "new_message",
-      from,
-      name,
-      message: commandText,
-      isLid,
-    });
-
     if (commandText && commandText.startsWith(PREFIX)) {
       const commandBody = commandText.slice(PREFIX.length).trim();
       const command = commandBody.split(" ")[0].toLowerCase();
+
+      appLogger.info(
+        `new_message from=${from} name=${name} command=${commandText}`
+      );
+
+      console.log(
+        "\n" +
+          chalk.green.bold("📩 Nova mensagem recebida!") +
+          "\n" +
+          chalk.blue("👤 De: ") +
+          from +
+          "\n" +
+          chalk.blue("📛 Nome: ") +
+          name +
+          "\n" +
+          chalk.blue("💬 Mensagem: ") +
+          commandText +
+          "\n" +
+          chalk.gray("----------------------------------------")
+      );
 
       if (command === "s" || command === "sticker") {
         if (!image) {
@@ -116,10 +115,5 @@ export const onMessageUpsert = async (socket, { type, messages }) => {
         appLogger.warn("Comando desconhecido: " + command);
       }
     }
-  } else {
-    console.log(
-      "Tipo de mensagem não tratado: " + type + " Mensagens: ",
-      messages
-    );
   }
 };

@@ -50,6 +50,5 @@ export const sticker = async (socket, targetUser, userName, imageBuffer) => {
       error: err.message,
       stack: err.stack,
     });
-    console.error("Sticker error:", err);
   }
 };

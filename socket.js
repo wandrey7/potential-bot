@@ -56,16 +56,21 @@ export const connect = async () => {
     }
 
     if (connection === "close") {
-      appLogger.warn("Closed Conection, trying to reconnect...");
-      const shoudReconect =
-        lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
+      const statusCode = lastDisconnect?.error?.output?.statusCode;
+      appLogger.warn("Connection closed", { statusCode });
+
+      const shoudReconect = statusCode !== DisconnectReason.loggedOut;
+
       if (shoudReconect) {
+        appLogger.info(
+          "Reconnecting in " + config.TIMEOUT_IN_MILI_BY_EVENT + "ms..."
+        );
         setTimeout(async () => {
-          appLogger.info("Trying to reconnect...");
           await connect();
         }, config.TIMEOUT_IN_MILI_BY_EVENT);
       } else {
-        appLogger.error("You have been logged out.");
+        appLogger.error("Logged out - statusCode: " + statusCode);
+        process.exit(1);
       }
     } else if (connection === "open") {
       appLogger.info("Connected successfully!");
