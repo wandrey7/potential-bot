@@ -1,8 +1,8 @@
 import { downloadMediaMessage } from "baileys";
 import chalk from "chalk";
-import "dotenv/config";
 import { ping } from "../commands/ping.js";
 import { sticker } from "../commands/sticker.js";
+import { config } from "../config/config.js";
 import { appLogger } from "../config/logs.js";
 
 export const onMessageUpsert = async (socket, { type, messages }) => {
@@ -89,8 +89,8 @@ export const onMessageUpsert = async (socket, { type, messages }) => {
       isLid,
     });
 
-    if (commandText && commandText.startsWith(process.env.PREFIX)) {
-      const commandBody = commandText.slice(process.env.PREFIX.length).trim();
+    if (commandText && commandText.startsWith(config.PREFIX)) {
+      const commandBody = commandText.slice(config.PREFIX.length).trim();
       const command = commandBody.split(" ")[0].toLowerCase();
 
       if (command === "s" || command === "sticker") {

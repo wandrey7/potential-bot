@@ -46,7 +46,7 @@ export const connect = async () => {
       if (shoudReconect) {
         setTimeout(async () => {
           appLogger.info("Trying to reconnect...");
-          await exports.connect();
+          await connect();
         }, config.TIMEOUT_IN_MILI_BY_EVENT);
       } else {
         appLogger.error("You have been logged out.");
@@ -56,7 +56,7 @@ export const connect = async () => {
     } else if (connection === "connecting") {
       appLogger.info("Connecting...");
     } else {
-      appLogger.info("Closed connection");
+      appLogger.info("Connection state changed:" + connection);
     }
   });
 
