@@ -28,7 +28,6 @@ async function start() {
       error: error.message,
       stack: error.stack,
     });
-    throw error;
   }
 }
 

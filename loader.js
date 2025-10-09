@@ -16,5 +16,5 @@ export const loader = async (socket) => {
     }, config.TIMEOUT_IN_MILI_BY_EVENT);
   });
 
-  appLogger.info("✅ [DEBUG] Event listener registrado com sucesso");
+  appLogger.info("✅ Event listener registered successfully");
 };
