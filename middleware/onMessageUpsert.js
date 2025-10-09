@@ -44,9 +44,18 @@ export const onMessageUpsert = async (socket, { type, messages }) => {
     const commandText = messageText || caption;
 
     if (!isLid) {
-      const lid = socket.signalRepository?.lidMapping?.getLIDForPN(targetJid);
-      if (lid) {
-        targetJid = lid;
+      try {
+        const lid = await socket.signalRepository?.lidMapping?.getLIDForPN(
+          targetJid
+        );
+        if (lid) {
+          targetJid = lid;
+        }
+      } catch (err) {
+        appLogger.error("Failed to convert to LID", {
+          error: err.message,
+          targetJid,
+        });
       }
     }
 
