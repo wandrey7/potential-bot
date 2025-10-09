@@ -6,14 +6,17 @@ import makeWASocket, {
 import NodeCache from "node-cache";
 import path from "path";
 import QRCode from "qrcode";
+import { fileURLToPath } from "url";
 import { appLogger, baileysLogger } from "./config/logs.js";
 
-const __dirname = path.resolve();
+// Resolve the directory of this file (robust under PM2/Docker/ESM)
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const groupCache = new NodeCache({
   /* ... */
 });
 
-export const connect = async () => {
+// onReady will be invoked once per socket instance (initial + every reconnect)
+export const connect = async (onReady) => {
   const { state, saveCreds } = await useMultiFileAuthState(
     path.resolve(__dirname, "assets", "auth", "baileys")
   );
@@ -28,6 +31,18 @@ export const connect = async () => {
     cachedGroupMetadata: async (jid) => groupCache.get(jid),
     markOnlineOnConnect: false,
   });
+
+  // Register app listeners for this socket instance immediately
+  if (typeof onReady === "function") {
+    try {
+      await onReady(sock);
+    } catch (err) {
+      appLogger.error("Error running onReady for socket", {
+        error: err?.message,
+        stack: err?.stack,
+      });
+    }
+  }
 
   sock.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect, qr } = update;
@@ -49,7 +64,6 @@ export const connect = async () => {
         );
         appLogger.info("QR Code received, scan it to authenticate.");
       } catch (error) {
-        console.error("Error generating QR code:", error.message);
         appLogger.error("Error generating QR code:", error.message);
       }
     }
@@ -61,7 +75,7 @@ export const connect = async () => {
       if (shouldReconnect) {
         appLogger.info("Connection closed, reconnecting...");
         setTimeout(async () => {
-          await connect();
+          await connect(onReady);
         }, 5000);
       } else {
         appLogger.error("Logged out");

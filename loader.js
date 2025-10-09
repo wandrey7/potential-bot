@@ -3,6 +3,8 @@ import { appLogger } from "./config/logs.js";
 import { onMessageUpsert } from "./middleware/onMessageUpsert.js";
 
 export const loader = async (socket) => {
+  // Ensure we don't accumulate duplicate listeners on reconnect
+  socket.ev.removeAllListeners?.("messages.upsert");
   socket.ev.on("messages.upsert", async ({ type, messages }) => {
     setTimeout(async () => {
       try {
