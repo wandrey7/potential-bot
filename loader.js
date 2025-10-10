@@ -10,7 +10,7 @@ export const loader = async (socket) => {
       try {
         await onMessageUpsert(socket, { type, messages });
       } catch (error) {
-        appLogger.error("Error in onMessageUpsert", {
+        appLogger.error("Error in onMessageUpsert %o", {
           error: error.message,
           stack: error.stack,
         });

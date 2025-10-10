@@ -37,7 +37,7 @@ export const connect = async (onReady) => {
     try {
       await onReady(sock);
     } catch (err) {
-      appLogger.error("Error running onReady for socket", {
+      appLogger.error("Error running onReady for socket %o", {
         error: err?.message,
         stack: err?.stack,
       });
@@ -64,7 +64,7 @@ export const connect = async (onReady) => {
         );
         appLogger.info("QR Code received, scan it to authenticate.");
       } catch (error) {
-        appLogger.error("Error generating QR code:", error.message);
+        appLogger.error("Error generating QR code: %s", error.message);
       }
     }
 
@@ -74,6 +74,7 @@ export const connect = async (onReady) => {
 
       if (shouldReconnect) {
         appLogger.info("Connection closed, reconnecting...");
+        appLogger.info("Reason: %s", DisconnectReason[statusCode] || "unknown");
         setTimeout(async () => {
           await connect(onReady);
         }, 5000);
