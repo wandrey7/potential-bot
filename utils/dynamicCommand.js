@@ -17,8 +17,11 @@ export const dynamicCommand = async (paramsHandler) => {
     return;
   }
 
-  if (!(await checkPermission({ type, ...paramsHandler }))) {
-    return sendWarningReply("Você não tem permissão para usar este comando.");
+  // Only check permissions for admin or owner commands
+  if (type === "admin" || type === "owner") {
+    if (!(await checkPermission({ type, ...paramsHandler }))) {
+      return sendWarningReply("Você não tem permissão para usar este comando.");
+    }
   }
 
   try {

@@ -17,6 +17,10 @@ export default {
 *│* _Verifica a velocidade de resposta._
 *│* Uso: \`\`\`${PREFIX}ping\`\`\`
 *│*
+*│* 💡 *Sugestão*
+*│* _Envia uma sugestão para o desenvolvedor._
+*│* Uso: \`\`\`${PREFIX}sugestao sua sugestão\`\`\`
+*│*
 *├─「 🎨 FIGURINHAS 」──┤*
 *│*
 *│* 🖼️ *Sticker*
@@ -27,6 +31,12 @@ export default {
 *│* 📝 *Attp*
 *│* _Cria uma figurinha de texto animado._
 *│* Uso: \`\`\`${PREFIX}attp seu texto aqui\`\`\`
+*│*
+*├─「 👑 ADMINISTRAÇÃO 」──┤*
+*│*
+*│* 🗣️ *Hidetag*
+*│* _Menciona todos os membros do grupo de forma oculta._
+*│* Uso: \`\`\`${PREFIX}hidetag\`\`\`
 *│*
 *╰────────────────────────╯*
 `;
