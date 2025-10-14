@@ -1,4 +1,4 @@
-import { downloadContentFromMessage } from "baileys";
+import { downloadContentFromMessage, isJidGroup } from "baileys";
 import { Buffer } from "buffer";
 import fs from "fs";
 import { writeFile } from "fs/promises";
@@ -8,21 +8,21 @@ import { COMMANDS_DIR, PREFIX, TEMP_DIR } from "../config/config.js";
 import { appLogger } from "../config/logs.js";
 
 export const extractDataFromMessage = (webMessage) => {
-  const textMessage = webMessage.message?.conversation;
-  const extendedTextMessage = webMessage.message?.extendedTextMessage;
-  const extendedTextMessageText = extendedTextMessage?.text;
-  const imageTextMessage = webMessage.message?.imageMessage?.caption;
-  const videoTextMessage = webMessage.message?.videoMessage?.caption;
+  const {
+    key: { remoteJid, fromMe, id },
+    message,
+  } = webMessage;
 
-  const fullMessage =
-    textMessage ||
-    extendedTextMessageText ||
-    imageTextMessage ||
-    videoTextMessage;
+  const textMessage =
+    message?.conversation ||
+    message?.extendedTextMessage?.text ||
+    message?.imageMessage?.caption ||
+    message?.videoMessage?.caption;
 
-  if (!fullMessage) {
+  if (!textMessage) {
     return {
       remoteJid: null,
+      senderJid: null,
       userJid: null,
       prefix: null,
       commandName: null,
@@ -32,24 +32,21 @@ export const extractDataFromMessage = (webMessage) => {
     };
   }
 
-  const isReply =
-    !!extendedTextMessage && !!extendedTextMessage?.contextInfo?.quotedMessage;
+  const isGroup = isJidGroup(remoteJid);
+  const senderJid = isGroup ? webMessage.key.participant : remoteJid;
+
+  const isReply = !!message?.extendedTextMessage?.contextInfo?.quotedMessage;
   const replyJid =
-    !!extendedTextMessage && extendedTextMessage?.contextInfo?.participant
-      ? extendedTextMessage?.contextInfo?.participant
-      : null;
+    message?.extendedTextMessage?.contextInfo?.participant || null;
 
-  const userJid = webMessage?.key?.remoteJid
-    ? webMessage.key.remoteJid.replace(/:[0-9][0-9]|:[0-9]/g, "")
-    : null;
-
-  const [command, ...args] = fullMessage.split(" ");
+  const [command, ...args] = textMessage.split(" ");
   const prefix = command.charAt(0);
   const commandWithoutPrefix = command.replace(new RegExp(`^[${PREFIX}]`), "");
 
   return {
-    remoteJid: webMessage?.key?.remoteJid,
-    userJid,
+    remoteJid,
+    senderJid,
+    userJid: senderJid, // Mantendo userJid por retrocompatibilidade temporária
     prefix,
     commandName: formatCommand(commandWithoutPrefix),
     isReply,

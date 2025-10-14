@@ -69,3 +69,5 @@ assets/auth/baileys/
 
 # Log files
 *.log
+
+.env

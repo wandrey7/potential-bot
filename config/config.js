@@ -1,3 +1,4 @@
+import "dotenv/config";
 import path from "path";
 import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -6,6 +7,7 @@ export const config = {
   TIMEOUT_IN_MILI_BY_EVENT: 700,
 };
 
+export const OWNER_NUMBER = process.env.OWNER_NUMBER || "";
 export const PREFIX = "/";
 export const BOT_EMOJI = "🤖";
 export const BOT_NAME = "Wanbit";
