@@ -50,7 +50,7 @@ const baseLogger = P(
           colorize: true,
           translateTime: "SYS:standard",
           ignore: "pid,hostname,service",
-          hideObject: true,
+          hideObject: false,
         },
       },
     ],
@@ -81,7 +81,7 @@ const baileysLogger = P(
           colorize: true,
           translateTime: "SYS:standard",
           ignore: "pid,hostname,service",
-          hideObject: true,
+          hideObject: false,
         },
       },
     ],
@@ -91,4 +91,38 @@ const baileysLogger = P(
 // Logger for the application - shows info in the console
 const appLogger = baseLogger.child({ level: "info" });
 
-export { appLogger, baileysLogger };
+// Logger that only writes to files, without console output
+const fileLogger = P(
+  P.transport({
+    targets: [
+      {
+        target: "pino-roll",
+        level: "info",
+        options: {
+          file: logFilePath,
+          frequency: "daily",
+          size: "10M",
+          limit: {
+            count: 7,
+          },
+          mkdir: true,
+        },
+      },
+      {
+        target: "pino-roll",
+        level: "error",
+        options: {
+          file: errorLogFilePath,
+          frequency: "daily",
+          size: "10M",
+          limit: {
+            count: 30,
+          },
+          mkdir: true,
+        },
+      },
+    ],
+  })
+);
+
+export { appLogger, baileysLogger, fileLogger };

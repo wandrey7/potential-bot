@@ -12,7 +12,6 @@ export const onMessageUpsert = async (socket, { messages }) => {
 
     await dynamicCommand(commonFunctions);
   } catch (error) {
-    console.log("Error in onMessageUpsert:", error);
     appLogger.error("Error in onMessageUpsert %o", {
       error: error.message,
       stack: error.stack,
