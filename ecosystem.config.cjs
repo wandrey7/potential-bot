@@ -20,6 +20,7 @@ module.exports = {
           "assets/logs/**",
           "node_modules/**",
           ".git/**",
+          "prisma/client/**",
         ],
       },
     },

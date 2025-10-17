@@ -2,9 +2,13 @@ FROM node:22
 
 WORKDIR /app
 
-COPY . .
+COPY package*.json ./
 
 RUN npm install
+
+COPY . .
+
+RUN npx prisma generate
 
 RUN apt-get update && \
     apt-get clean && \

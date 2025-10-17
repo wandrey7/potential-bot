@@ -5,7 +5,6 @@ import { writeFile } from "fs/promises";
 import path from "path";
 import { pathToFileURL } from "url";
 import { COMMANDS_DIR, PREFIX, TEMP_DIR } from "../config/config.js";
-import { appLogger } from "../config/logs.js";
 
 export const extractDataFromMessage = (webMessage) => {
   const {
@@ -43,6 +42,16 @@ export const extractDataFromMessage = (webMessage) => {
   const prefix = command.charAt(0);
   const commandWithoutPrefix = command.replace(new RegExp(`^[${PREFIX}]`), "");
 
+  let processedArgs = args;
+
+  if (args.length > 0) {
+    const joinedArgs = args.join(" ");
+    const splitArgs = splitByCharacters(joinedArgs, ["\\", "|", "/"]);
+
+    processedArgs =
+      splitArgs.length === 1 && splitArgs[0] === joinedArgs ? args : splitArgs;
+  }
+
   return {
     remoteJid,
     senderJid,
@@ -51,7 +60,7 @@ export const extractDataFromMessage = (webMessage) => {
     commandName: formatCommand(commandWithoutPrefix),
     isReply,
     replyJid,
-    args: splitByCharacters(args.join(" "), ["\\", "|", "/"]),
+    args: processedArgs,
   };
 };
 
@@ -128,8 +137,6 @@ export const findCommandImport = async (commandName) => {
   const command = await readCommandImports();
   let typeReturn = "";
   let targetCommandReturn = null;
-
-  appLogger.debug("Finding command import for command: %s", commandName);
 
   for (const [type, commands] of Object.entries(command)) {
     if (!commands.length) continue;

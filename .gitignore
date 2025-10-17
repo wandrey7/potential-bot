@@ -71,3 +71,7 @@ assets/auth/baileys/
 *.log
 
 .env
+/generated/prisma
+
+# Prisma
+prisma/client/

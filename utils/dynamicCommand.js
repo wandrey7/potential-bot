@@ -1,12 +1,23 @@
 import { isJidGroup } from "baileys";
+import { OWNER_NUMBER } from "../config/config.js";
 import { fileLogger } from "../config/logs.js";
 import { checkPermission } from "../middleware/checkPermission.js";
+import {
+  checkGroupRentalStatus,
+  createGroupIfNotExists,
+} from "../services/groupService.js";
+import {
+  addUserIfNotExists,
+  checkUserPermission,
+} from "../services/userService.js";
 import { DangerError, InvalidParameterError, WarningError } from "./errors.js";
 import {
   findCommandImport,
   hasTypeOrCommand,
   verifyPrefix,
 } from "./extractDataFromMessage.js";
+
+import { appLogger } from "../config/logs.js";
 
 export const dynamicCommand = async (paramsHandler) => {
   const {
@@ -16,6 +27,8 @@ export const dynamicCommand = async (paramsHandler) => {
     sendErrorReply,
     socket,
     remoteJid,
+    userName,
+    groupName,
     senderJid,
     args,
     commandName,
@@ -24,7 +37,25 @@ export const dynamicCommand = async (paramsHandler) => {
     isSticker,
   } = paramsHandler;
 
+  appLogger.debug("dynamicCommand started for commandName: %o", {
+    commandName,
+  });
   const { type, command } = await findCommandImport(commandName);
+  appLogger.debug("findCommandImport result %o", {
+    type: type,
+    comando: command?.name,
+  });
+
+  if (senderJid) {
+    await addUserIfNotExists(userName, senderJid);
+  }
+
+  if (remoteJid && groupName) {
+    await createGroupIfNotExists(
+      groupName.toLowerCase(),
+      remoteJid.split("@")[0]
+    );
+  }
 
   if (!verifyPrefix(prefix) || !hasTypeOrCommand({ type, command })) {
     return;
@@ -32,15 +63,28 @@ export const dynamicCommand = async (paramsHandler) => {
 
   if (type === "admin" || type === "owner") {
     if (!(await checkPermission({ type, ...paramsHandler }))) {
+      appLogger.info("Permission denied for command: %o", {
+        commandName,
+        type,
+      });
       return sendWarningReply("Você não tem permissão para usar este comando.");
+    }
+  } else {
+    if (
+      (!isJidGroup(remoteJid) && !(await checkUserPermission(senderJid))) ||
+      (isJidGroup(remoteJid) && !(await checkGroupRentalStatus(remoteJid)))
+    ) {
+      return sendWarningReply(
+        `Você não tem permissão para usar este comando. Compre o acesso ao admin do bot: wa.me/${OWNER_NUMBER}`
+      );
     }
   }
 
-  let groupName;
-  if (isJidGroup(remoteJid)) {
-    const metadata = await socket.groupMetadata(remoteJid);
-    groupName = metadata?.subject;
-  }
+  // let groupName;
+  // if (isJidGroup(remoteJid)) {
+  //   const metadata = await socket.groupMetadata(remoteJid);
+  //   groupName = metadata?.subject;
+  // }
 
   try {
     await command.handle({ ...paramsHandler, type });

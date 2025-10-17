@@ -1,3 +1,4 @@
+import { isJidGroup } from "baileys";
 import fs from "fs";
 import { BOT_EMOJI, OWNER_NUMBER } from "../config/config.js";
 import {
@@ -14,6 +15,18 @@ export const loadCommonFunction = async ({ socket, webMessage }) => {
   const isImage = baileysIs(webMessage, "image");
   const isVideo = baileysIs(webMessage, "video");
   const isSticker = baileysIs(webMessage, "sticker");
+
+  const userName = webMessage.pushName || "Desconhecido";
+
+  let groupName = null;
+  if (remoteJid && isJidGroup(remoteJid)) {
+    try {
+      const metadata = await socket.groupMetadata(remoteJid);
+      groupName = metadata.subject;
+    } catch (error) {
+      groupName = "Desconhecido";
+    }
+  }
 
   const isBotAdmin = async () => {
     try {
@@ -169,6 +182,8 @@ export const loadCommonFunction = async ({ socket, webMessage }) => {
     remoteJid,
     senderJid,
     prefix,
+    userName,
+    groupName,
     isReply,
     replyJid,
     args,
