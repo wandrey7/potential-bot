@@ -19,6 +19,7 @@ export default {
     }
 
     const fullArgs = args.join(" ");
+
     const match = fullArgs.match(/^(\S+)\s+"([^"]+)"$/);
 
     let newDateInput, groupName;
@@ -36,18 +37,10 @@ export default {
     if (!remoteJid) {
       return await sendErrorReply(`Grupo '${groupName}' não encontrado.`);
     }
-
     const newDate = new Date(newDateInput);
+    const isValidDate = !isNaN(newDate.getTime());
 
-    appLogger.debug("Date parsing: %o", {
-      newDateInput,
-      newDate,
-      isValid: !isNaN(newDate.getTime()),
-      timestamp: newDate.getTime(),
-      isoString: newDate.toISOString(),
-    });
-
-    if (isNaN(newDate.getTime())) {
+    if (!isValidDate) {
       return await sendErrorReply(
         "Data inválida. Por favor, forneça a data no formato AAAA-MM-DD."
       );
