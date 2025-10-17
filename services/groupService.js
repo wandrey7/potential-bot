@@ -79,9 +79,7 @@ export const checkGroupRentalStatus = async (groupJid) => {
 export const getGroupJidByName = async (socket, groupName) => {
   try {
     const groups = await socket.groupFetchAllParticipating();
-    const group = Object.values(groups).find(
-      (g) => g.subject.toLowerCase() === groupName.toLowerCase()
-    );
+    const group = Object.values(groups).find((g) => g.subject === groupName);
     return group?.id || null;
   } catch (error) {
     appLogger.error("Error fetching group by name %o", {
