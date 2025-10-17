@@ -8,42 +8,30 @@ import {
 export default {
   name: "Set New RentalDate",
   description:
-    "Aplica uma nova data de aluguel para o grupo. Argumentos: data no formato AAAA-MM-DD e nome do grupo.",
+    "Aplica uma nova data de aluguel para o grupo. Argumentos: data no formato AAAA-MM-DD e nome do grupo entre aspas.",
   commands: ["setrentaldate", "srd"],
   usage: `${PREFIX}setrentaldate`,
   handle: async ({ socket, args, sendSucessReply, sendErrorReply }) => {
-    appLogger.info("Executing setNewRentalDate command with args: %o", args);
-    appLogger.debug("Args details: %o", {
-      argsLength: args.length,
-      argsRaw: args,
-      argsJoined: args.join(" "),
-    });
-
-    if (args.length < 2) {
-      appLogger.warn("Insufficient arguments: %o", {
-        argsLength: args.length,
-        expected: "at least 2",
-        received: args,
-      });
+    if (args.length < 1) {
       return await sendErrorReply(
-        "Argumentos insuficientes. Forneça a data (AAAA-MM-DD) e o nome do grupo."
+        "Argumentos insuficientes. Forneça a data (AAAA-MM-DD) e o nome do grupo entre aspas."
       );
     }
 
-    const newDateInput = args[0];
-    const groupName = args.slice(1).join(" ");
-    appLogger.debug("Parsed arguments: %o", {
-      newDateInput,
-      groupName,
-      argsSlice: args.slice(1),
-    });
+    const fullArgs = args.join(" ");
+    const match = fullArgs.match(/^(\S+)\s+"([^"]+)"$/);
+
+    let newDateInput, groupName;
+    if (match) {
+      newDateInput = match[1];
+      groupName = match[2];
+    } else {
+      return await sendErrorReply(
+        'Formato inválido. Use: data "nome do grupo" (com aspas no nome).'
+      );
+    }
 
     const remoteJid = await getGroupJidByName(socket, groupName);
-    appLogger.debug(
-      "Group JID found: %s for group name: %s",
-      remoteJid,
-      groupName
-    );
 
     if (!remoteJid) {
       return await sendErrorReply(`Grupo '${groupName}' não encontrado.`);
@@ -60,7 +48,6 @@ export default {
     });
 
     if (isNaN(newDate.getTime())) {
-      appLogger.warn("Invalid date provided: %s", newDateInput);
       return await sendErrorReply(
         "Data inválida. Por favor, forneça a data no formato AAAA-MM-DD."
       );
@@ -68,11 +55,6 @@ export default {
 
     try {
       await setNewRentalDate(remoteJid.split("@")[0], newDate);
-      appLogger.info(
-        "Successfully set new rental date for group %s to %s",
-        remoteJid,
-        newDate.toISOString()
-      );
       return await sendSucessReply(
         `A nova data de aluguel para o grupo '${groupName}' foi definida para ${
           newDate.toISOString().split("T")[0]
