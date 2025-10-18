@@ -142,8 +142,9 @@ export const findCommandImport = async (commandName) => {
     if (!commands.length) continue;
 
     const targetCommand = commands.find((cmd) =>
-      cmd.commands.some((name) => formatCommand(name).includes(commandName))
+      cmd.commands.some((name) => formatCommand(name) === commandName)
     );
+    // Removed includes check to ensure exact match
 
     if (targetCommand) {
       typeReturn = type;
