@@ -11,11 +11,7 @@ import {
   checkUserPermission,
 } from "../services/userService.js";
 import { DangerError, InvalidParameterError, WarningError } from "./errors.js";
-import {
-  findCommandImport,
-  hasTypeOrCommand,
-  verifyPrefix,
-} from "./extractDataFromMessage.js";
+import { findCommandImport, verifyPrefix } from "./extractDataFromMessage.js";
 
 import { appLogger } from "../config/logs.js";
 
@@ -36,15 +32,7 @@ export const dynamicCommand = async (paramsHandler) => {
     isVideo,
     isSticker,
   } = paramsHandler;
-
-  appLogger.debug("dynamicCommand started for commandName: %o", {
-    commandName,
-  });
   const { type, command } = await findCommandImport(commandName);
-  appLogger.debug("findCommandImport result %o", {
-    type: type,
-    comando: command?.name,
-  });
 
   if (senderJid) {
     await addUserIfNotExists(userName, senderJid);
@@ -55,7 +43,17 @@ export const dynamicCommand = async (paramsHandler) => {
     await createGroupIfNotExists(groupName.toLowerCase(), groupJidToSave);
   }
 
-  if (!verifyPrefix(prefix) || !hasTypeOrCommand({ type, command })) {
+  if (!remoteJid) {
+    return;
+  }
+
+  if (verifyPrefix(prefix) && !command) {
+    return sendWarningReply(
+      "Comando ou prefixo inválido. Use o /menu para ajuda."
+    );
+  }
+
+  if (!verifyPrefix(prefix) || !command) {
     return;
   }
 
@@ -64,21 +62,27 @@ export const dynamicCommand = async (paramsHandler) => {
       return sendWarningReply("Você não tem permissão para usar este comando.");
     }
   } else {
-    if (!isJidGroup(remoteJid) && !(await checkUserPermission(senderJid))) {
-      return sendWarningReply(
-        `Você não tem permissão para usar este comando. Compre o acesso ao admin do bot: wa.me/${OWNER_NUMBER}`
-      );
-    }
+    const isPrivilegedUser = await checkPermission({
+      type: "admin",
+      ...paramsHandler,
+    });
 
-    if (isJidGroup(remoteJid)) {
-      const groupJidToCheck = remoteJid.split("@")[0];
-
-      const hasValidRental = await checkGroupRentalStatus(groupJidToCheck);
-
-      if (!hasValidRental) {
+    if (!isPrivilegedUser) {
+      if (!isJidGroup(remoteJid) && !(await checkUserPermission(senderJid))) {
         return sendWarningReply(
           `Você não tem permissão para usar este comando. Compre o acesso ao admin do bot: wa.me/${OWNER_NUMBER}`
         );
+      }
+
+      if (isJidGroup(remoteJid)) {
+        const groupJidToCheck = remoteJid.split("@")[0];
+        const hasValidRental = await checkGroupRentalStatus(groupJidToCheck);
+
+        if (!hasValidRental) {
+          return sendWarningReply(
+            `Você não tem permissão para usar este comando. Compre o acesso ao admin do bot: wa.me/${OWNER_NUMBER}`
+          );
+        }
       }
     }
   }
@@ -146,6 +150,10 @@ export const dynamicCommand = async (paramsHandler) => {
     } else if (error instanceof DangerError) {
       return sendErrorReply(error.message);
     } else {
+      appLogger.error("Unhandled error in dynamicCommand: %o", {
+        error: error.message,
+        stack: error.stack,
+      });
       await sendErrorReply(
         `Ocorreu um erro ao executar o comando: ${commandName}! O Desenvolvedor foi notificado.`
       );
