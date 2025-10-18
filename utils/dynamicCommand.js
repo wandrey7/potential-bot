@@ -64,6 +64,7 @@ export const dynamicCommand = async (paramsHandler) => {
     }
   } else {
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (
       !isJidGroup(remoteJid) &&
       !(await checkUserPermission(senderJid)) &&
@@ -86,9 +87,29 @@ export const dynamicCommand = async (paramsHandler) => {
       const hasValidRental = await checkGroupRentalStatus(groupJidToCheck);
 
       if (!hasValidRental) {
+=======
+    const isPrivilegedUser = await checkPermission({
+      type: "admin",
+      ...paramsHandler,
+    });
+
+    if (!isPrivilegedUser) {
+      if (!isJidGroup(remoteJid) && !(await checkUserPermission(senderJid))) {
+>>>>>>> 975a413 (fix(dynamicCommand): streamline command verification and enhance error logging)
         return sendWarningReply(
           `Você não tem permissão para usar este comando. Compre o acesso ao admin do bot: wa.me/${OWNER_NUMBER}`
         );
+      }
+
+      if (isJidGroup(remoteJid)) {
+        const groupJidToCheck = remoteJid.split("@")[0];
+        const hasValidRental = await checkGroupRentalStatus(groupJidToCheck);
+
+        if (!hasValidRental) {
+          return sendWarningReply(
+            `Você não tem permissão para usar este comando. Compre o acesso ao admin do bot: wa.me/${OWNER_NUMBER}`
+          );
+        }
       }
     }
   }
