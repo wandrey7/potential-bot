@@ -1,4 +1,4 @@
-FROM node:22
+FROM node:22-slim AS builder
 
 WORKDIR /app
 
@@ -10,8 +10,12 @@ COPY . .
 
 RUN npx prisma generate
 
-RUN apt-get update && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN npm prune --production
+
+FROM node:22-slim AS production
+
+WORKDIR /app
+
+COPY --from=builder /app .
 
 CMD ["node", "index.js"]
