@@ -4,7 +4,7 @@ on:
     branches: ["main"]
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -28,8 +28,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKER_REGISTRY }}/${{ github.repository_owner }}/wanbit:${{ github.ref_name }}
-             ${{ secrets.DOCKER_REGISTRY }}/${{ github.repository_owner }}/wanbit:latest
+            ${{ secrets.DOCKER_REGISTRY }}/${{ github.repository_owner }}/potential-bot:${{ github.ref_name }}
+             ${{ secrets.DOCKER_REGISTRY }}/${{ github.repository_owner }}/potential-bot:latest
 
       - name: Notificar para fazer o deploy
         run: >
