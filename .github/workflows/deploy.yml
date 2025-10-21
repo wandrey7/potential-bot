@@ -4,12 +4,20 @@ on:
     branches: ["main"]
 jobs:
   deploy:
+<<<<<<< HEAD
     runs-on: self-hosted
+=======
+    runs-on: ubuntu-latest
+>>>>>>> d57be80 (feat(deploy): add GitHub Actions workflow for Docker deployment)
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+<<<<<<< HEAD
       - name: Log in to the Image Repository
+=======
+      - name: Log in to Docker Image Repository
+>>>>>>> d57be80 (feat(deploy): add GitHub Actions workflow for Docker deployment)
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.DOCKER_REGISTRY }}
