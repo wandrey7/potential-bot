@@ -1,6 +1,5 @@
 FROM node:22-slim AS builder
 
-# Install build dependencies for canvas
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libcairo2-dev \
@@ -8,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg-dev \
     libgif-dev \
     librsvg2-dev \
+    openssl \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -24,7 +24,6 @@ RUN npm prune --production
 
 FROM node:22-slim AS production
 
-# Install runtime dependencies for canvas
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
     libpango-1.0-0 \
@@ -32,6 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgif7 \
     librsvg2-2 \
     libexpat1 \
+    openssl \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
