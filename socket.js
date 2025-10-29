@@ -3,6 +3,7 @@ import makeWASocket, {
   fetchLatestBaileysVersion,
   useMultiFileAuthState,
 } from "baileys";
+import { existsSync, rmSync } from "fs";
 import NodeCache from "node-cache";
 import path from "path";
 import QRCode from "qrcode";
@@ -69,20 +70,49 @@ export const connect = async (onReady) => {
     }
 
     if (connection === "close") {
-      const statusCode = lastDisconnect?.error?.output?.statusCode;
-      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+      const shouldReconnect =
+        lastDisconnect?.error?.output?.statusCode !==
+        DisconnectReason.loggedOut;
+
+      appLogger.info("Connection closed, reconnecting %s", shouldReconnect);
 
       if (shouldReconnect) {
-        appLogger.info("Connection closed, reconnecting...");
-        appLogger.info("Reason: %s", DisconnectReason[statusCode] || "unknown");
+        appLogger.info("Attempting to reconnect...");
         setTimeout(async () => {
-          await connect(onReady);
+          try {
+            await connect(onReady);
+          } catch (error) {
+            appLogger.error("Reconnection failed: %s", error.message);
+          }
         }, 5000);
       } else {
-        appLogger.error("Logged out");
+        appLogger.error(
+          "Logged out - clearing auth state and restarting connection"
+        );
+
+        // Clear auth state when logged out
+        const authDir = path.resolve(__dirname, "assets", "auth", "baileys");
+        if (existsSync(authDir)) {
+          try {
+            rmSync(authDir, { recursive: true, force: true });
+            appLogger.info("Auth state cleared successfully");
+          } catch (error) {
+            appLogger.error("Failed to clear auth state: %s", error.message);
+          }
+        }
+
+        // Restart connection after cleanup - NO process exit
+        appLogger.info("Restarting connection with clean state...");
+        setTimeout(async () => {
+          try {
+            await connect(onReady);
+          } catch (error) {
+            appLogger.error("Failed to restart connection: %s", error.message);
+          }
+        }, 3000);
       }
     } else if (connection === "open") {
-      appLogger.info("Connected successfully!");
+      appLogger.info("✅ Socket conectado, registrando listeners...");
     }
   });
 
