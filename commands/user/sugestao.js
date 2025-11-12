@@ -23,7 +23,7 @@ export default {
     const suggestion = args.join(" ");
     const isSuggestionSent = await sendMessageToOwner(
       `📢 *Nova Sugestão Recebida!*\n\n🕒 Horário: ${new Date().toLocaleString()}\n👤 Número: ${
-        message.key?.remoteJid.split(":")[0]
+        message.key?.remoteJid.split("@")[0]
       }\n💡 Sugestão: ${suggestion}`
     );
 

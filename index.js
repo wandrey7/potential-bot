@@ -1,8 +1,8 @@
 import { appLogger } from "./config/logs.js";
 import { loader } from "./loader.js";
+import { initializeCleanupService } from "./services/cleanupService.js";
 import { connect } from "./socket.js";
 
-// Captura erros não tratados
 process.on("uncaughtException", (error) => {
   console.error("❌ [ERRO NÃO TRATADO]", error);
   console.error("Stack:", error.stack);
@@ -16,13 +16,16 @@ process.on("unhandledRejection", (reason, promise) => {
 async function start() {
   try {
     appLogger.info("🚀 Iniciando bot...");
+
+    await initializeCleanupService();
+
     await connect(async (socket) => {
       appLogger.info("✅ Socket conectado, registrando listeners...");
       await loader(socket);
       appLogger.info("🚀 Listeners prontos");
     });
   } catch (error) {
-    appLogger.error("Erro no start", {
+    appLogger.error("Erro no start %o", {
       error: error.message,
       stack: error.stack,
     });
