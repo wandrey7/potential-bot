@@ -17,8 +17,8 @@ export const loadCommonFunction = async ({ socket, webMessage }) => {
   const isSticker = baileysIs(webMessage, "sticker");
 
   const userName = webMessage.pushName || "Desconhecido";
-
   let groupName = null;
+
   if (remoteJid && isJidGroup(remoteJid)) {
     try {
       const metadata = await socket.groupMetadata(remoteJid);
@@ -92,6 +92,20 @@ export const loadCommonFunction = async ({ socket, webMessage }) => {
 
   const sendTextWithoutEmoji = async (text) => {
     return socket.sendMessage(remoteJid, { text: text });
+  };
+
+  const sendMessageWithMention = async (text, targetJid) => {
+    return socket.sendMessage(remoteJid, {
+      text: `${BOT_EMOJI} ${text}`,
+      mentions: [targetJid],
+    });
+  };
+
+  const sendMessageWithMentionWithoutEmoji = async (text, targetJid) => {
+    return socket.sendMessage(remoteJid, {
+      text: text,
+      mentions: [targetJid],
+    });
   };
 
   const sendMessageToOwner = async (text) => {
@@ -200,6 +214,8 @@ export const loadCommonFunction = async ({ socket, webMessage }) => {
     downloadDocumentBuffer,
     sendText,
     sendTextWithoutEmoji,
+    sendMessageWithMention,
+    sendMessageWithMentionWithoutEmoji,
     sendMessageToOwner,
     sendReply,
     sendReact,

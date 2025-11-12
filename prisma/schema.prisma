@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "./client"
@@ -17,20 +11,38 @@ datasource db {
 
 // users that has permission to access bot pv
 model User {
-  id            String   @id @default(uuid())
+  id            String      @id @default(uuid())
   name          String?
-  senderJid     String   @unique
-  hasPermission Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  senderJid     String      @unique
+  hasPermission Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  userGroups    UserGroup[]
 }
 
 // groups that has permission to access bot pv
 model Group {
-  id           String    @id @unique @default(uuid())
+  id           String      @id @unique @default(uuid())
   name         String?
-  groupJid     String    @unique
+  groupJid     String      @unique
   expireRental DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  userGroups   UserGroup[]
+}
+
+// many-to-many relation between User and Group
+model UserGroup {
+  id         String   @id @default(uuid())
+  userId     String
+  groupId    String
+  points     Int      @default(0)
+  roulettes  Int      @default(0)
+  stoleToday Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
 }
