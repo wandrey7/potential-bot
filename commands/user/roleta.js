@@ -19,15 +19,16 @@ export default {
     remoteJid,
   }) => {
     const randomNumber = genAleatoryNumbers(0, 100);
-    const userRoulette = await userRouletteToday(senderJid, remoteJid);
+    const groupJid = remoteJid.split("@")[0];
+    const userRoulette = await userRouletteToday(senderJid, groupJid);
 
     if (userRoulette) {
       return await sendWarningReply(
         "você já jogou a roleta russa hoje neste grupo. Tente novamente amanhã!"
       );
     } else {
-      await pointsToUser(senderJid, remoteJid, randomNumber, true);
-      await incrementUserRoulette(senderJid, remoteJid);
+      await pointsToUser(senderJid, groupJid, randomNumber, true);
+      await incrementUserRoulette(senderJid, groupJid);
       await sendSucessReply(
         `Você jogou a roleta russa e ganhou ${randomNumber} pontos!`
       );

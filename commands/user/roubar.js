@@ -22,7 +22,8 @@ export default {
     webMessage,
   }) => {
     const randomNumber = genAleatoryNumbers(0, 100);
-    const userStoleTd = await userStoleToday(senderJid, remoteJid);
+    const groupJid = remoteJid.split("@")[0];
+    const userStoleTd = await userStoleToday(senderJid, groupJid);
 
     let targetUserJid = replyJid;
 
@@ -45,9 +46,9 @@ export default {
         "você já roubou pontos hoje neste grupo. Tente novamente amanhã!"
       );
     } else {
-      await pointsToUser(senderJid, remoteJid, randomNumber, true);
-      await pointsToUser(targetUserJid, remoteJid, randomNumber, false);
-      await incrementUserStoleToday(senderJid, remoteJid);
+      await pointsToUser(senderJid, groupJid, randomNumber, true);
+      await pointsToUser(targetUserJid, groupJid, randomNumber, false);
+      await incrementUserStoleToday(senderJid, groupJid);
 
       const userDisplayName = await getUserDisplayName(
         targetUserJid,
