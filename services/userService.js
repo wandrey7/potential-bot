@@ -144,6 +144,9 @@ export const incrementUserStoleToday = async (senderJid, groupJid) => {
  * @param {string} groupJid - The group's JID.
  */
 export const createUserGroupIfNotExists = async (senderJid, groupJid) => {
+  if (!senderJid || !groupJid) {
+    return;
+  }
   try {
     const user = await prisma.user.findUnique({ where: { senderJid } });
     const group = await prisma.group.findUnique({ where: { groupJid } });
@@ -182,6 +185,9 @@ export const createUserGroupIfNotExists = async (senderJid, groupJid) => {
  */
 export const incrementUserRoulette = async (senderJid, groupJid) => {
   try {
+    if (!senderJid || !groupJid) {
+      return;
+    }
     await prisma.userGroup.updateMany({
       where: {
         user: { senderJid: senderJid },
@@ -210,6 +216,9 @@ export const incrementUserRoulette = async (senderJid, groupJid) => {
  */
 export const pointsToUser = async (senderJid, groupJid, points, increment) => {
   try {
+    if (!senderJid || !groupJid) {
+      return;
+    }
     const incrementValue = increment === false ? -points : points;
     await prisma.userGroup.updateMany({
       where: {
