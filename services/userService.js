@@ -139,6 +139,42 @@ export const incrementUserStoleToday = async (senderJid, groupJid) => {
   }
 };
 
+/** * Create a UserGroup entry if it does not exist.
+ * @param {string} senderJid - The sender's JID.
+ * @param {string} groupJid - The group's JID.
+ */
+export const createUserGroupIfNotExists = async (senderJid, groupJid) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { senderJid } });
+    const group = await prisma.group.findUnique({ where: { groupJid } });
+
+    if (!user || !group) {
+      return;
+    }
+
+    await prisma.userGroup.upsert({
+      where: {
+        userId_groupId: {
+          userId: user.id,
+          groupId: group.id,
+        },
+      },
+      update: {},
+      create: {
+        userId: user.id,
+        groupId: group.id,
+      },
+    });
+  } catch (error) {
+    appLogger.error("Error upserting userGroup %o", {
+      error: error.message,
+      stack: error.stack,
+      senderJid,
+      groupJid,
+    });
+  }
+};
+
 /**
  * Increment the roulette count for a user in a specific group.
  * @param {string} senderJid - The sender's JID.

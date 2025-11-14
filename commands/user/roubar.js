@@ -4,6 +4,7 @@ import {
   pointsToUser,
   userStoleToday,
 } from "../../services/userService.js";
+import { getUserDisplayName } from "../../utils/baileysHelpers.js";
 import { genAleatoryNumbers } from "../../utils/helpers.js";
 
 export default {
@@ -48,10 +49,12 @@ export default {
       await pointsToUser(targetUserJid, remoteJid, randomNumber, false);
       await incrementUserStoleToday(senderJid, remoteJid);
 
-      const userDisplayNumber = targetUserJid.split("@")[0];
-
       await sendMessageWithMention(
-        `Você roubou com sucesso ${randomNumber} pontos do usuário ${userDisplayNumber}!`,
+        `Você roubou com sucesso ${randomNumber} pontos do usuário ${getUserDisplayName(
+          targetUserJid,
+          webMessage,
+          remoteJid
+        )}!`,
         targetUserJid
       );
     }

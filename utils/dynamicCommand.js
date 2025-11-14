@@ -9,6 +9,7 @@ import {
 import {
   addUserIfNotExists,
   checkUserPermission,
+  createUserGroupIfNotExists,
 } from "../services/userService.js";
 import { DangerError, InvalidParameterError, WarningError } from "./errors.js";
 import { findCommandImport, verifyPrefix } from "./extractDataFromMessage.js";
@@ -42,6 +43,7 @@ export const dynamicCommand = async (paramsHandler) => {
   if (remoteJid && groupName) {
     const groupJidToSave = remoteJid.split("@")[0];
     await createGroupIfNotExists(groupName.toLowerCase(), groupJidToSave);
+    await createUserGroupIfNotExists(senderJid, groupJidToSave);
   }
 
   if (!remoteJid) {
