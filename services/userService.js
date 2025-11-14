@@ -99,7 +99,17 @@ export const userRouletteToday = async (senderJid, groupJid) => {
         user: { senderJid: senderJid },
         group: { groupJid: groupJid },
       },
+      select: { roulettes: true },
     });
+
+    if (!userGroup) {
+      appLogger.warn(
+        "UserGroup not found for groupJid: %s, senderJid: %s. Assuming roulette can be played.",
+        groupJid,
+        senderJid
+      );
+      return false;
+    }
 
     return userGroup.roulettes >= 3;
   } catch (error) {
