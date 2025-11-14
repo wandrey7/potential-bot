@@ -1,4 +1,4 @@
-import { appLogger } from "../config/logs";
+import { appLogger } from "../config/logs.js";
 
 export const getUserDisplayName = async (jid, socket, remoteJid) => {
   try {

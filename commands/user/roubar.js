@@ -49,12 +49,14 @@ export default {
       await pointsToUser(targetUserJid, remoteJid, randomNumber, false);
       await incrementUserStoleToday(senderJid, remoteJid);
 
+      const userDisplayName = await getUserDisplayName(
+        targetUserJid,
+        webMessage,
+        remoteJid
+      );
+
       await sendMessageWithMention(
-        `Você roubou com sucesso ${randomNumber} pontos do usuário ${getUserDisplayName(
-          targetUserJid,
-          webMessage,
-          remoteJid
-        )}!`,
+        `Você roubou com sucesso ${randomNumber} pontos do usuário ${userDisplayName}!`,
         targetUserJid
       );
     }
