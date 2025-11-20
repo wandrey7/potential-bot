@@ -38,6 +38,16 @@ export default {
 *│* _Menciona todos os membros do grupo de forma oculta._
 *│* Uso: \`\`\`${PREFIX}hidetag\`\`\`
 *│*
+*├─「 🎲 JOGOS 」──┤*
+*│*
+*│* 💰 *Roubar*
+*│* _Rouba pontos de outro usuário em um grupo, use com reply na mensagem do alvo ou marcando o usuário._
+*│* Uso: \`\`\`${PREFIX}roubar\`\`\`
+*│*
+*│* 🎰 *Roleta*
+*│* _Jogue a roleta russa e teste sua sorte, você pode ganhar de 0 a 100 pontos por dia!_
+*│* Uso: \`\`\`${PREFIX}roleta\`\`\`
+*│*
 *╰────────────────────────╯*
 `;
     await sendTextWithoutEmoji(menuText);
