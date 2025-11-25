@@ -26,6 +26,11 @@ export default {
     try {
       await sendWaitReact();
 
+      if (remoteJid.endsWith("@g.us") === false) {
+        await sendErrorReply("Este comando só pode ser usado em grupos!");
+        return;
+      }
+
       const userPoints = await getUserPoints(senderJid, remoteJid);
       const profilePicUrl = getUserProfilePicUrl(senderJid);
       const stoleToday = await userStoleToday(senderJid, remoteJid);
