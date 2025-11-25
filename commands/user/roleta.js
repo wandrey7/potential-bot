@@ -17,7 +17,12 @@ export default {
     sendSucessReply,
     senderJid,
     remoteJid,
+    sendErrorReply,
   }) => {
+    if (remoteJid.endsWith("@g.us") === false) {
+      await sendErrorReply("Este comando só pode ser usado em grupos!");
+      return;
+    }
     const randomNumber = genAleatoryNumbers(0, 100);
     const groupJid = remoteJid.split("@")[0];
     const userRoulette = await userRouletteToday(senderJid, groupJid);

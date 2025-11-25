@@ -21,7 +21,13 @@ export default {
     senderJid,
     remoteJid,
     webMessage,
+    sendErrorReply,
   }) => {
+    if (remoteJid.endsWith("@g.us") === false) {
+      await sendErrorReply("Este comando só pode ser usado em grupos!");
+      return;
+    }
+
     let targetUserJid = replyJid;
 
     if (!targetUserJid) {
