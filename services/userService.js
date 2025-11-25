@@ -248,3 +248,34 @@ export const pointsToUser = async (senderJid, groupJid, points, increment) => {
     });
   }
 };
+
+/**
+ * Get the current points of a user in a specific group.
+ * @param {string} senderJid - The sender's JID.
+ * @param {string} groupJid - The group's JID.
+ * @returns {Promise<number>} - The current points of the user in the group.
+ */
+export const getUserPoints = async (senderJid, groupJid) => {
+  try {
+    if (!senderJid || !groupJid) {
+      return 0;
+    }
+    const userGroup = await prisma.userGroup.findFirst({
+      where: {
+        user: { senderJid: senderJid },
+        group: { groupJid: groupJid },
+      },
+      select: { points: true },
+    });
+
+    return userGroup ? userGroup.points : 0;
+  } catch (error) {
+    appLogger.error("Error getting user points %o", {
+      error: error.message,
+      stack: error.stack,
+      senderJid,
+      groupJid,
+    });
+    return 0;
+  }
+};

@@ -2,51 +2,37 @@ import { PREFIX } from "../../config/config.js";
 
 export default {
   name: "menu",
-  description: "Mostra o menu de comandos",
-  commands: ["menu", "ajuda"],
+  description: "Mostra o menu de comandos geral",
+  commands: ["menu"],
   usage: `${PREFIX}menu`,
   handle: async ({ sendTextWithoutEmoji }) => {
     const menuText = `
 *╭─< ✨ MENU DE COMANDOS ✨ >─╮*
 *│*
 *│* 🤖  Aqui estão todos os comandos!
+*│* Para comandos exclusivos para grupos, use \`\`\`${PREFIX}menugrupo\`\`\`
 *│*
 *├─「 ⚙️ UTILIDADES 」──┤*
 *│*
-*│* 💥 *Ping*
-*│* _Verifica a velocidade de resposta._
-*│* Uso: \`\`\`${PREFIX}ping\`\`\`
+*│* 💥 */ping* _Verifica a velocidade de resposta._
 *│*
-*│* 💡 *Sugestão*
-*│* _Envia uma sugestão para o desenvolvedor._
-*│* Uso: \`\`\`${PREFIX}sugestao sua sugestão\`\`\`
+*│* 💡 */sugestão <sua sugestão>* _Envia uma sugestão para o desenvolvedor._
 *│*
 *├─「 🎨 FIGURINHAS 」──┤*
 *│*
-*│* 🖼️ *Sticker*
-*│* _Converte imagem, vídeo ou gif._
-*│* Uso: Marque uma mídia e digite
-*│* \`\`\`${PREFIX}sticker\`\`\`
+*│* 🖼️ */sticker* _Converte imagem, vídeo ou gif para sticker._ Uso: Marque uma mídia
 *│*
-*│* 📝 *Attp*
-*│* _Cria uma figurinha de texto animado._
-*│* Uso: \`\`\`${PREFIX}attp seu texto aqui\`\`\`
+*│* 📝 */attp <seu texto aqui>* _Cria uma figurinha de texto animado._
 *│*
 *├─「 👑 ADMINISTRAÇÃO 」──┤*
 *│*
-*│* 🗣️ *Hidetag*
-*│* _Menciona todos os membros do grupo de forma oculta._
-*│* Uso: \`\`\`${PREFIX}hidetag\`\`\`
+*│* 🗣️ */hidetag* _Menciona todos os membros do grupo de forma oculta._
 *│*
 *├─「 🎲 JOGOS 」──┤*
 *│*
-*│* 💰 *Roubar*
-*│* _Rouba pontos de outro usuário em um grupo, use com reply na mensagem do alvo ou marcando o usuário._
-*│* Uso: \`\`\`${PREFIX}roubar\`\`\`
+*│* 💰 */roubar* _Rouba pontos de outro usuário em um grupo, use com reply na mensagem do alvo ou marcando o usuário._
 *│*
-*│* 🎰 *Roleta*
-*│* _Jogue a roleta russa e teste sua sorte, você pode ganhar de 0 a 100 pontos por dia!_
-*│* Uso: \`\`\`${PREFIX}roleta\`\`\`
+*│* 🎰 */roleta* _Jogue a roleta russa e teste sua sorte, você pode ganhar de 0 a 100 pontos por dia!_
 *│*
 *╰────────────────────────╯*
 `;
