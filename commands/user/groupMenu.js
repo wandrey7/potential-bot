@@ -16,9 +16,12 @@ export default {
 *│*
 *├─「 🎲 JOGOS 」──┤*
 *│*
-*│* 💰 *roubar* _Rouba pontos de outro usuário em um grupo, use com reply na mensagem do alvo ou marcando o usuário._
+*│* 💰 */roubar* _Rouba pontos de outro usuário em um grupo, use com reply na mensagem do alvo ou marcando o usuário._
 *│*
-*│* 🎰 */Roleta* _Jogue a roleta russa e teste sua sorte, você pode ganhar de 0 a 100 pontos por dia!_
+*│* 🎰 */roleta* _Jogue a roleta russa e teste sua sorte, você pode ganhar de 0 a 100 pontos por dia!_
+*│*
+*├─「 👤 USUÁRIO 」──┤*
+*|* */perfil* _Envia o perfil do usuário._
 *│*
 *╰────────────────────────╯*
 `;

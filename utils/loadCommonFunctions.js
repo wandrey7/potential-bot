@@ -108,6 +108,15 @@ export const loadCommonFunction = async ({ socket, webMessage }) => {
     });
   };
 
+  const getUserProfilePicUrl = async (userJid) => {
+    try {
+      const profilePicUrl = await socket.profilePictureUrl(userJid, "image");
+      return profilePicUrl;
+    } catch (error) {
+      return null;
+    }
+  };
+
   const sendMessageToOwner = async (text) => {
     const numberToCheck = `${OWNER_NUMBER}@s.whatsapp.net`;
     const [result] = await socket.onWhatsApp(numberToCheck);
@@ -201,6 +210,7 @@ export const loadCommonFunction = async ({ socket, webMessage }) => {
     isReply,
     replyJid,
     args,
+    getUserProfilePicUrl,
     commandName,
     isImage,
     isVideo,

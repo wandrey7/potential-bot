@@ -28,12 +28,6 @@ export default {
 *│*
 *│* 🗣️ */hidetag* _Menciona todos os membros do grupo de forma oculta._
 *│*
-*├─「 🎲 JOGOS 」──┤*
-*│*
-*│* 💰 */roubar* _Rouba pontos de outro usuário em um grupo, use com reply na mensagem do alvo ou marcando o usuário._
-*│*
-*│* 🎰 */roleta* _Jogue a roleta russa e teste sua sorte, você pode ganhar de 0 a 100 pontos por dia!_
-*│*
 *╰────────────────────────╯*
 `;
     await sendTextWithoutEmoji(menuText);
