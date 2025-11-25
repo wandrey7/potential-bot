@@ -36,7 +36,7 @@ export default {
       const stoleToday = await userStoleToday(senderJid, remoteJid);
       const userRoulette = await userRouletteToday(senderJid, remoteJid);
 
-      const menuText = `*╭─< ✨ PERFIL DO USUÁRIO ✨ >─╮*
+      const menuText = `*╭─< ✨ PERFIL DO USUÁRIO ✨
 *│*
 *│* 🤖 Olá, *${userName}*!
 *│* Aqui estão as suas informações:
@@ -44,10 +44,9 @@ export default {
 *├─「 👤 DADOS 」──┤*
 *│*
 *│* 📛 *Nome:* ${userName}
-*│* 🆔 *Número:* @${senderJid.split("@")[0]}
 *│* 💰 *Pontos:* ${userPoints}
 *|* 👤💰 *Roubou Hoje: ${stoleToday ? "✅" : "❌"}
-*|* 🎰 *Roletou Hoje: ${userRoulette} vezes
+*|* 🎰 *Roletou Hoje: ${userRoulette ? userRoulette + " vezes" : "❌"}* 
 *│*
 *╰────────────────────────╯*`;
 
