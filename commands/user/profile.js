@@ -32,7 +32,7 @@ export default {
       }
 
       const userPoints = await getUserPoints(senderJid, remoteJid);
-      const profilePicUrl = getUserProfilePicUrl(senderJid);
+      const profilePicUrl = await getUserProfilePicUrl(senderJid);
       const stoleToday = await userStoleToday(senderJid, remoteJid);
       const userRoulette = await userRouletteToday(senderJid, remoteJid);
 
