@@ -40,7 +40,9 @@ export const onGroupParticipantsUpdate = async (socket, update) => {
     }
 
     if (!Array.isArray(participants) || participants.length === 0) {
-      appLogger.debug("No participants to process in onGroupParticipantsUpdate");
+      appLogger.debug(
+        "No participants to process in onGroupParticipantsUpdate",
+      );
       return;
     }
 
@@ -53,11 +55,12 @@ export const onGroupParticipantsUpdate = async (socket, update) => {
     // Process each new member
     for (const participant of participants) {
       try {
-        // Extract member info
-        // Participant JID format: "1234567890@s.whatsapp.net"
-        // We need to get the display name
+        if (typeof participant !== "string") {
+          continue;
+        }
+
         const memberJid = participant;
-        const memberName = participant.split("@")[0]; // Extract phone number as fallback
+        const memberName = participant.split("@")[0];
 
         appLogger.debug("Processing new member %o", {
           groupJid,
