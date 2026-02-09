@@ -55,7 +55,10 @@ export const substituteMentionsAndVariables = (template, variables) => {
 
   // Extract mentions (JIDs marked with @{...})
   const mentions = [];
-  if (memberJid && (template.includes("@{memberName}") || template.includes("{memberName}"))) {
+  if (
+    memberJid &&
+    (template.includes("@{memberName}") || template.includes("{memberName}"))
+  ) {
     mentions.push(memberJid);
   }
 
@@ -157,25 +160,32 @@ export const sendWelcomeMessage = async (socket, groupJid, newMember) => {
     // Check if bot has permission to send messages in the group
     try {
       const groupMetadata = await socket.groupMetadata(groupJid);
-      const botJid = socket.user?.id?.replace(':0', '');
-      
+      const botJid = socket.user?.id?.replace(":0", "");
+
       // Check if group is in announcement mode and bot is not admin
       const isAnnouncementGroup = groupMetadata.announce;
-      const botParticipant = groupMetadata.participants?.find(p => p.id === botJid + '@s.whatsapp.net');
-      const isBotAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
+      const botParticipant = groupMetadata.participants?.find(
+        (p) => p.id === botJid + "@s.whatsapp.net",
+      );
+      const isBotAdmin =
+        botParticipant?.admin === "admin" ||
+        botParticipant?.admin === "superadmin";
 
       appLogger.debug("Group permissions check %o", {
         groupJid,
         isAnnouncementGroup,
         isBotAdmin,
-        botJid: botJid + '@s.whatsapp.net',
+        botJid: botJid + "@s.whatsapp.net",
       });
 
       if (isAnnouncementGroup && !isBotAdmin) {
-        appLogger.warn("Cannot send welcome message: bot is not admin in announcement group %o", {
-          groupJid,
-          groupName: groupMetadata.subject,
-        });
+        appLogger.warn(
+          "Cannot send welcome message: bot is not admin in announcement group %o",
+          {
+            groupJid,
+            groupName: groupMetadata.subject,
+          },
+        );
         return false;
       }
     } catch (metadataError) {
@@ -187,7 +197,7 @@ export const sendWelcomeMessage = async (socket, groupJid, newMember) => {
 
     try {
       const result = await socket.sendMessage(groupJid, messageContent);
-      
+
       appLogger.info("Welcome message sent successfully %o", {
         groupJid,
         memberJid: newMember.jid,

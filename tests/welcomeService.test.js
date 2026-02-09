@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  substituteMentionsAndVariables,
-  sendWelcomeMessage,
   getWelcomeTemplate,
+  sendWelcomeMessage,
+  substituteMentionsAndVariables,
 } from "../services/welcomeService.js";
 
 // Mock the logger
@@ -24,8 +24,8 @@ vi.mock("../prisma/client.js", () => ({
   },
 }));
 
-import prisma from "../prisma/client.js";
 import { appLogger } from "../config/logs.js";
+import prisma from "../prisma/client.js";
 
 describe("welcomeService", () => {
   beforeEach(() => {
@@ -79,7 +79,10 @@ describe("welcomeService", () => {
 
     it("should throw error if template is not a string", () => {
       expect(() => {
-        substituteMentionsAndVariables(null, { memberName: "João", groupName: "Grupo" });
+        substituteMentionsAndVariables(null, {
+          memberName: "João",
+          groupName: "Grupo",
+        });
       }).toThrow("Template must be a non-empty string");
     });
 
@@ -112,9 +115,7 @@ describe("welcomeService", () => {
 
       const result = substituteMentionsAndVariables(template, variables);
 
-      expect(result.text).toBe(
-        "Bem-vindo João! João é novo no Dev Team!"
-      );
+      expect(result.text).toBe("Bem-vindo João! João é novo no Dev Team!");
     });
 
     it("should add memberJid to mentions when template contains @{memberName}", () => {
@@ -242,7 +243,11 @@ describe("welcomeService", () => {
     });
 
     it("should throw error if newMember is invalid", async () => {
-      const result = await sendWelcomeMessage(mockSocket, "123456789@g.us", null);
+      const result = await sendWelcomeMessage(
+        mockSocket,
+        "123456789@g.us",
+        null,
+      );
 
       expect(result).toBe(false);
       expect(appLogger.error).toHaveBeenCalled();
@@ -273,16 +278,14 @@ describe("welcomeService", () => {
       });
 
       expect(appLogger.info).toHaveBeenCalled();
-      const logCall = appLogger.info.mock.calls.find(
-        (call) => call[0].includes("Welcome message sent")
+      const logCall = appLogger.info.mock.calls.find((call) =>
+        call[0].includes("Welcome message sent"),
       );
       expect(logCall).toBeDefined();
     });
 
     it("should handle socket.sendMessage errors", async () => {
-      mockSocket.sendMessage.mockRejectedValue(
-        new Error("Send failed")
-      );
+      mockSocket.sendMessage.mockRejectedValue(new Error("Send failed"));
 
       const result = await sendWelcomeMessage(mockSocket, "123456789@g.us", {
         jid: "5511999999999@s.whatsapp.net",

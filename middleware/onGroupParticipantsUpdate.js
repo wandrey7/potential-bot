@@ -38,7 +38,9 @@ export const onGroupParticipantsUpdate = async (socket, update) => {
     }
 
     if (!Array.isArray(participants) || participants.length === 0) {
-      appLogger.debug("No participants to process in onGroupParticipantsUpdate");
+      appLogger.debug(
+        "No participants to process in onGroupParticipantsUpdate",
+      );
       return;
     }
 
@@ -51,17 +53,40 @@ export const onGroupParticipantsUpdate = async (socket, update) => {
 
     for (const participant of participants) {
       try {
-        if (typeof participant !== "string") {
-          appLogger.warn("Skipping non-string participant in group %o", {
+        let memberJid, memberName;
+
+        // Handle both string format and object format
+        if (typeof participant === "string") {
+          // Old format: "5521965070832@s.whatsapp.net"
+          memberJid = participant;
+          memberName = participant.split("@")[0];
+        } else if (participant && typeof participant === "object") {
+          // New format: { id: "...", phoneNumber: "5521965070832@s.whatsapp.net", admin: null }
+          if (participant.phoneNumber) {
+            memberJid = participant.phoneNumber;
+            memberName = participant.phoneNumber.split("@")[0];
+          } else if (participant.id) {
+            // Fallback to id if phoneNumber is not available
+            memberJid = participant.id;
+            memberName = participant.id.split("@")[0];
+          } else {
+            appLogger.warn(
+              "Participant object missing both phoneNumber and id %o",
+              {
+                groupJid,
+                participant,
+              },
+            );
+            continue;
+          }
+        } else {
+          appLogger.warn("Skipping invalid participant in group %o", {
             groupJid,
             participant,
             type: typeof participant,
           });
           continue;
         }
-
-        const memberJid = participant;
-        const memberName = participant.split("@")[0];
 
         appLogger.debug("Processing new member %o", {
           groupJid,
