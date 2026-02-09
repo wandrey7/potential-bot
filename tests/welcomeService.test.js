@@ -116,6 +116,36 @@ describe("welcomeService", () => {
         "Bem-vindo João! João é novo no Dev Team!"
       );
     });
+
+    it("should add memberJid to mentions when template contains @{memberName}", () => {
+      const template = "Bem-vindo @{memberName} ao grupo {groupName}!";
+      const memberJid = "5511999999999@s.whatsapp.net";
+      const variables = {
+        memberName: "João",
+        groupName: "Dev Team",
+        memberJid,
+      };
+
+      const result = substituteMentionsAndVariables(template, variables);
+
+      expect(result.text).toBe("Bem-vindo @João ao grupo Dev Team!");
+      expect(result.mentions).toEqual([memberJid]);
+    });
+
+    it("should add memberJid to mentions when template contains {memberName} (without @)", () => {
+      const template = "Bem-vindo {memberName} ao grupo {groupName}!";
+      const memberJid = "5511999999999@s.whatsapp.net";
+      const variables = {
+        memberName: "João",
+        groupName: "Dev Team",
+        memberJid,
+      };
+
+      const result = substituteMentionsAndVariables(template, variables);
+
+      expect(result.text).toBe("Bem-vindo João ao grupo Dev Team!");
+      expect(result.mentions).toEqual([memberJid]);
+    });
   });
 
   describe("getWelcomeTemplate", () => {

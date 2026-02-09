@@ -8,13 +8,12 @@ import { sendWelcomeMessage } from "../services/welcomeService.js";
  * @param {Object} socket - The Baileys socket instance
  * @param {Object} update - The group-participants.update event data
  * @param {string} update.id - The group JID
- * @param {string[]} update.participants - Array of participant JIDs
+ * @param {(string|Object)[]} update.participants - Array of participant JIDs or GroupParticipant objects
  * @param {string} update.action - Action type: 'add', 'remove', 'promote', 'demote'
  * @returns {Promise<void>}
  */
 export const onGroupParticipantsUpdate = async (socket, update) => {
   try {
-    // Validate inputs
     if (!socket || typeof socket.sendMessage !== "function") {
       appLogger.error("Invalid socket in onGroupParticipantsUpdate");
       return;
@@ -27,7 +26,6 @@ export const onGroupParticipantsUpdate = async (socket, update) => {
 
     const { id: groupJid, participants = [], action } = update;
 
-    // Only process "add" action (new members joining)
     if (action !== "add") {
       return;
     }
@@ -40,9 +38,7 @@ export const onGroupParticipantsUpdate = async (socket, update) => {
     }
 
     if (!Array.isArray(participants) || participants.length === 0) {
-      appLogger.debug(
-        "No participants to process in onGroupParticipantsUpdate",
-      );
+      appLogger.debug("No participants to process in onGroupParticipantsUpdate");
       return;
     }
 
@@ -50,12 +46,17 @@ export const onGroupParticipantsUpdate = async (socket, update) => {
       groupJid,
       action,
       participantsCount: participants.length,
+      participants,
     });
 
-    // Process each new member
     for (const participant of participants) {
       try {
         if (typeof participant !== "string") {
+          appLogger.warn("Skipping non-string participant in group %o", {
+            groupJid,
+            participant,
+            type: typeof participant,
+          });
           continue;
         }
 
@@ -68,11 +69,18 @@ export const onGroupParticipantsUpdate = async (socket, update) => {
           memberName,
         });
 
-        // Send welcome message
-        await sendWelcomeMessage(socket, groupJid, {
+        const welcomeSent = await sendWelcomeMessage(socket, groupJid, {
           jid: memberJid,
           name: memberName,
         });
+
+        if (!welcomeSent) {
+          appLogger.warn("Failed to send welcome message %o", {
+            groupJid,
+            memberJid,
+            memberName,
+          });
+        }
       } catch (error) {
         appLogger.error("Error processing participant in group %o", {
           error: error.message,
@@ -80,7 +88,6 @@ export const onGroupParticipantsUpdate = async (socket, update) => {
           groupJid,
           participant,
         });
-        // Continue with next participant even if one fails
         continue;
       }
     }
