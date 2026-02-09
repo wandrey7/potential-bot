@@ -8,13 +8,16 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "migration": "npx prisma migrate deploy",
-    "generate": "npx prisma generate"
+    "generate": "npx prisma generate",
+    "test": "vitest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "@vitest/coverage-v8": "^4.0.18",
+    "nodemon": "^3.1.10",
+    "vitest": "^4.0.18"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.80",
