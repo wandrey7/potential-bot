@@ -10,14 +10,16 @@ const convertVideoToWebp = (videoBuffer) => {
       "-i",
       "pipe:0", // Input from stdin
       "-t",
-      "6", // Limit duration to 6 seconds
+      "5", // Limit duration to 5 seconds (reduced from 6)
       "-fs",
-      "950K", // Limit file size to 950KB
+      "500K", // Limit file size to 500KB (reduced from 950K for iOS compatibility)
       "-vf",
-      "scale=512:512:force_original_aspect_ratio=decrease,fps=15,pad=512:512:-1:-1:color=black@0.0",
+      "scale=512:512:force_original_aspect_ratio=decrease,fps=10,pad=512:512:-1:-1:color=black@0.0",
       "-loop",
       "0", // Loop indefinitely
       "-an", // No audio
+      "-quality",
+      "75", // WebP quality (0-100, lower = smaller file)
       "-f",
       "webp", // Output format
       "pipe:1", // Output to stdout
@@ -71,6 +73,56 @@ const convertVideoToWebp = (videoBuffer) => {
   });
 };
 
+/**
+ * Ensures the sticker buffer is under 1MB for iOS compatibility
+ * If the buffer is too large, it reprocesses with lower quality
+ */
+const ensureStickerSize = async (webpBuffer) => {
+  const MAX_SIZE_BYTES = 1024 * 1024; // 1MB in bytes
+  
+  // If already under 1MB, return as is
+  if (webpBuffer.length <= MAX_SIZE_BYTES) {
+    appLogger.info(`Sticker size OK: ${(webpBuffer.length / 1024).toFixed(2)}KB`);
+    return webpBuffer;
+  }
+
+  appLogger.warn(
+    `Sticker too large (${(webpBuffer.length / 1024).toFixed(2)}KB), reprocessing...`
+  );
+
+  try {
+    // Try to compress further using Sharp
+    // We'll reduce quality progressively until it fits
+    const qualities = [75, 60, 50, 40];
+    
+    for (const quality of qualities) {
+      const compressedBuffer = await sharp(webpBuffer, { animated: true })
+        .webp({ quality, effort: 6 })
+        .toBuffer();
+      
+      if (compressedBuffer.length <= MAX_SIZE_BYTES) {
+        appLogger.info(
+          `Sticker compressed to ${(compressedBuffer.length / 1024).toFixed(2)}KB at quality ${quality}`
+        );
+        return compressedBuffer;
+      }
+    }
+
+    // If still too large after all attempts, return the most compressed version
+    // This is better than failing completely
+    appLogger.warn("Could not reduce sticker below 1MB, using lowest quality");
+    const finalBuffer = await sharp(webpBuffer, { animated: true })
+      .webp({ quality: 30, effort: 6 })
+      .toBuffer();
+    
+    return finalBuffer;
+  } catch (error) {
+    appLogger.error("Error compressing sticker: %o", error);
+    // If compression fails, return original and hope for the best
+    return webpBuffer;
+  }
+};
+
 export default {
   name: "sticker",
   description: "Cria um sticker a partir de uma imagem ou vídeo.",
@@ -109,6 +161,8 @@ export default {
       } else if (videoBuffer) {
         try {
           stickerWebpBuffer = await convertVideoToWebp(videoBuffer);
+          // Ensure the sticker is under 1MB for iOS compatibility
+          stickerWebpBuffer = await ensureStickerSize(stickerWebpBuffer);
         } catch (error) {
           await sendErrorReply(
             "Houve um erro ao converter o vídeo para sticker."
