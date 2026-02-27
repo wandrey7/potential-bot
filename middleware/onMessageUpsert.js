@@ -8,10 +8,27 @@ export const onMessageUpsert = async (socket, { messages }) => {
 
     const webMessage = messages[0];
 
+    // Ignorar mensagens do próprio bot
+    if (webMessage?.key?.fromMe) {
+      return;
+    }
+
+    // Ignorar mensagens sem conteúdo (pode ser erro de descriptografia)
+    if (!webMessage?.message) {
+      appLogger.debug("Mensagem sem conteúdo ignorada");
+      return;
+    }
+
     const commonFunctions = await loadCommonFunction({ socket, webMessage });
 
     await dynamicCommand(commonFunctions);
   } catch (error) {
+    // Ignorar erros de descriptografia silenciosamente
+    if (error?.output?.statusCode === 500) {
+      appLogger.debug("Erro de descriptografia ignorado");
+      return;
+    }
+
     appLogger.error("Error in onMessageUpsert %o", {
       error: error.message,
       stack: error.stack,

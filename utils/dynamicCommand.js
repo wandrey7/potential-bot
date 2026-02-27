@@ -36,17 +36,12 @@ export const dynamicCommand = async (paramsHandler) => {
   const { type, command } = await findCommandImport(commandName);
   const isOwner = senderJid?.split("@")[0] === OWNER_NUMBER;
 
-  if (senderJid) {
-    await addUserIfNotExists(userName, senderJid);
-  }
-
-  if (remoteJid && groupName) {
-    const groupJidToSave = remoteJid.split("@")[0];
-    await createGroupIfNotExists(groupName.toLowerCase(), groupJidToSave);
-    await createUserGroupIfNotExists(senderJid, groupJidToSave);
-  }
-
   if (!remoteJid) {
+    return;
+  }
+
+  // Ignora mensagens de grupo que não são comandos válidos
+  if (isJidGroup(remoteJid) && (!verifyPrefix(prefix) || !command)) {
     return;
   }
 
@@ -58,6 +53,17 @@ export const dynamicCommand = async (paramsHandler) => {
 
   if (!verifyPrefix(prefix) || !command) {
     return;
+  }
+
+  // Registrar user/group/userGroup somente quando executar um comando
+  if (senderJid) {
+    await addUserIfNotExists(userName, senderJid);
+  }
+
+  if (remoteJid && groupName) {
+    const groupJidToSave = remoteJid.split("@")[0];
+    await createGroupIfNotExists(groupName.toLowerCase(), groupJidToSave);
+    await createUserGroupIfNotExists(senderJid, groupJidToSave);
   }
 
   if (type === "admin" || type === "owner") {
