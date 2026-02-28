@@ -20,6 +20,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
+    "@imgly/background-removal-node": "^1.4.5",
     "@napi-rs/canvas": "^0.1.80",
     "@prisma/client": "^6.17.1",
     "baileys": "^7.0.0-rc.5",

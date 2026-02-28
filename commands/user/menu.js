@@ -22,6 +22,8 @@ export default {
 *│*
 *│* 🖼️ */sticker* _Converte imagem, vídeo ou gif para sticker._ Uso: Marque uma mídia
 *│*
+*│* ✂️ */semfundo* _Remove o fundo de uma imagem e cria um sticker com transparência._ Uso: Marque uma imagem
+*│*
 *│* 📝 */attp <seu texto aqui>* _Cria uma figurinha de texto animado._
 *│*
 *├─「 👑 ADMINISTRAÇÃO 」──┤*
