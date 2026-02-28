@@ -1,9 +1,13 @@
 import { config } from "./config/config.js";
 import { appLogger } from "./config/logs.js";
-import { onMessageUpsert } from "./middleware/onMessageUpsert.js";
 import { onGroupParticipantsUpdate } from "./middleware/onGroupParticipantsUpdate.js";
+import { onMessageUpsert } from "./middleware/onMessageUpsert.js";
+import { readCommandImports } from "./utils/extractDataFromMessage.js";
 
 export const loader = async (socket) => {
+  await readCommandImports();
+  appLogger.info("✅ Commands pre-loaded into cache");
+
   // Ensure we don't accumulate duplicate listeners on reconnect
   socket.ev.removeAllListeners?.("messages.upsert");
   socket.ev.on("messages.upsert", async ({ type, messages }) => {

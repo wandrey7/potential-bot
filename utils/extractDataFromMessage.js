@@ -114,13 +114,13 @@ export const downloadBuffer = async (webMessage, context) => {
 
   const stream = await downloadContentFromMessage(content, context);
 
-  let buffer = Buffer.from([]);
+  const chunks = [];
 
   for await (const chunk of stream) {
-    buffer = Buffer.concat([buffer, chunk]);
+    chunks.push(chunk);
   }
 
-  return buffer;
+  return Buffer.concat(chunks);
 };
 
 export const download = async (webMessage, fileName, context, extension) => {
@@ -159,7 +159,11 @@ export const findCommandImport = async (commandName) => {
   };
 };
 
+let cachedCommandImports = null;
+
 export const readCommandImports = async () => {
+  if (cachedCommandImports) return cachedCommandImports;
+
   const subDirectories = fs
     .readdirSync(COMMANDS_DIR, { withFileTypes: true })
     .filter((directory) => directory.isDirectory())
@@ -189,7 +193,17 @@ export const readCommandImports = async () => {
 
     commandImports[subdir] = files;
   }
+
+  cachedCommandImports = commandImports;
   return commandImports;
+};
+
+/**
+ * Limpa o cache de imports de comandos.
+ * Útil para recarregar comandos sem reiniciar o bot.
+ */
+export const clearCommandCache = () => {
+  cachedCommandImports = null;
 };
 
 export const verifyPrefix = (prefix) => PREFIX === prefix;

@@ -77,7 +77,7 @@ const convertVideoToWebp = (videoBuffer) => {
  * Ensures the sticker buffer is under 1MB for iOS compatibility
  * If the buffer is too large, it reprocesses with lower quality
  */
-const ensureStickerSize = async (webpBuffer) => {
+const ensureStickerSize = async (webpBuffer, animated = false) => {
   const MAX_SIZE_BYTES = 1024 * 1024; // 1MB in bytes
   
   // If already under 1MB, return as is
@@ -91,13 +91,11 @@ const ensureStickerSize = async (webpBuffer) => {
   );
 
   try {
-    // Try to compress further using Sharp
-    // We'll reduce quality progressively until it fits
-    const qualities = [75, 60, 50, 40];
+    const qualities = [50, 35];
     
     for (const quality of qualities) {
-      const compressedBuffer = await sharp(webpBuffer, { animated: true })
-        .webp({ quality, effort: 6 })
+      const compressedBuffer = await sharp(webpBuffer, { animated })
+        .webp({ quality, effort: 4 })
         .toBuffer();
       
       if (compressedBuffer.length <= MAX_SIZE_BYTES) {
@@ -109,18 +107,44 @@ const ensureStickerSize = async (webpBuffer) => {
     }
 
     // If still too large after all attempts, return the most compressed version
-    // This is better than failing completely
     appLogger.warn("Could not reduce sticker below 1MB, using lowest quality");
-    const finalBuffer = await sharp(webpBuffer, { animated: true })
-      .webp({ quality: 30, effort: 6 })
+    const finalBuffer = await sharp(webpBuffer, { animated })
+      .webp({ quality: 25, effort: 4 })
       .toBuffer();
     
     return finalBuffer;
   } catch (error) {
     appLogger.error("Error compressing sticker: %o", error);
-    // If compression fails, return original and hope for the best
     return webpBuffer;
   }
+};
+
+/**
+ * Builds a WebP sticker buffer with EXIF metadata (pack name, author, etc.)
+ */
+const buildStickerWithExif = async (webpBuffer, pushName) => {
+  const webp = new Webp.Image();
+  await webp.load(webpBuffer);
+
+  const json = {
+    "sticker-pack-id": Date.now().toString(),
+    "sticker-pack-name": `Solicitado por: ${pushName} \n\n`,
+    "sticker-pack-publisher": `Criado por: ${BOT_NAME} | ${BOT_LINK}`,
+    "sticker-pack-version": "1",
+    "sticker-pack-copyright": BOT_NAME,
+    emojis: ["🤖", "😊", "👍"],
+  };
+
+  const exifAttr = Buffer.from([
+    0x49, 0x49, 0x2a, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57,
+    0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00,
+  ]);
+  const jsonBuffer = Buffer.from(JSON.stringify(json), "utf8");
+  const exif = Buffer.concat([exifAttr, jsonBuffer]);
+  exif.writeUIntLE(jsonBuffer.length, 14, 4);
+
+  webp.exif = exif;
+  return webp.save(null);
 };
 
 export default {
@@ -134,8 +158,12 @@ export default {
     downloadVideoBuffer,
     sendErrorReply,
     sendStickerFromBuffer,
+    sendWaitReact,
+    sendSucessReact,
   }) => {
     try {
+      await sendWaitReact();
+
       const imageBuffer = await downloadImageBuffer(webMessage);
       const videoBuffer = !imageBuffer
         ? await downloadVideoBuffer(webMessage)
@@ -158,11 +186,11 @@ export default {
           })
           .webp()
           .toBuffer();
+        stickerWebpBuffer = await ensureStickerSize(stickerWebpBuffer, false);
       } else if (videoBuffer) {
         try {
           stickerWebpBuffer = await convertVideoToWebp(videoBuffer);
-          // Ensure the sticker is under 1MB for iOS compatibility
-          stickerWebpBuffer = await ensureStickerSize(stickerWebpBuffer);
+          stickerWebpBuffer = await ensureStickerSize(stickerWebpBuffer, true);
         } catch (error) {
           await sendErrorReply(
             "Houve um erro ao converter o vídeo para sticker."
@@ -171,30 +199,13 @@ export default {
         }
       }
 
-      const webp = new Webp.Image();
-      await webp.load(stickerWebpBuffer);
-
-      const json = {
-        "sticker-pack-id": Date.now().toString(),
-        "sticker-pack-name": `Solicitado por: ${webMessage.pushName} \n\n`,
-        "sticker-pack-publisher": `Criado por: ${BOT_NAME} | ${BOT_LINK}`,
-        "sticker-pack-version": "1",
-        "sticker-pack-copyright": BOT_NAME,
-        emojis: ["🤖", "😊", "👍"],
-      };
-
-      const exifAttr = Buffer.from([
-        0x49, 0x49, 0x2a, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57,
-        0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00,
-      ]);
-      const jsonBuffer = Buffer.from(JSON.stringify(json), "utf8");
-      const exif = Buffer.concat([exifAttr, jsonBuffer]);
-      exif.writeUIntLE(jsonBuffer.length, 14, 4);
-
-      webp.exif = exif;
-      const finalStickerBuffer = await webp.save(null);
+      const finalStickerBuffer = await buildStickerWithExif(
+        stickerWebpBuffer,
+        webMessage.pushName
+      );
 
       await sendStickerFromBuffer(finalStickerBuffer);
+      await sendSucessReact();
     } catch (error) {
       appLogger.error("Error creating sticker: %o", {
         error: error.message,
