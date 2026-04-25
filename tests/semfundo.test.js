@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+
+vi.mock("@imgly/background-removal-node", () => ({
+  removeBackground: vi.fn(async (imageBlob) => imageBlob),
+}));
+
 import semfundoCommand from "../commands/user/semfundo.js";
-import sharp from "sharp";
+
+// 1x1 PNG (red pixel) used as deterministic fixture in tests.
+const RED_PIXEL_PNG_BASE64 =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO2L4s8AAAAASUVORK5CYII=";
 
 describe("semfundo command", () => {
   let mockParams;
@@ -31,7 +39,7 @@ describe("semfundo command", () => {
     await semfundoCommand.handle(mockParams);
 
     expect(mockParams.sendErrorReply).toHaveBeenCalledWith(
-      expect.stringContaining("Envie ou responda uma imagem")
+      expect.stringContaining("Envie ou responda uma imagem"),
     );
     expect(mockParams.sendWaitReact).not.toHaveBeenCalled();
   });
@@ -44,34 +52,21 @@ describe("semfundo command", () => {
 
     expect(mockParams.sendWaitReact).toHaveBeenCalled();
     expect(mockParams.sendErrorReply).toHaveBeenCalledWith(
-      expect.stringContaining("Não foi possível baixar a imagem")
+      expect.stringContaining("Não foi possível baixar a imagem"),
     );
   });
 
-  it("should process image with background removal (integration test)", async () => {
-    // Create a test image (simple red square)
-    const testImageBuffer = await sharp({
-      create: {
-        width: 500,
-        height: 500,
-        channels: 4,
-        background: { r: 255, g: 0, b: 0, alpha: 1 },
-      },
-    })
-      .png()
-      .toBuffer();
+  it("should process image and send sticker when background removal succeeds", async () => {
+    // Use a static PNG fixture to avoid flaky runtime sharp image generation.
+    const testImageBuffer = Buffer.from(RED_PIXEL_PNG_BASE64, "base64");
 
     mockParams.isImage = true;
     mockParams.downloadImageBuffer.mockResolvedValue(testImageBuffer);
 
-    // Note: This will actually call the removeBackground function which might take time
-    // In a real test environment, you might want to mock this
     await semfundoCommand.handle(mockParams);
 
     expect(mockParams.sendWaitReact).toHaveBeenCalled();
-    // The actual background removal and sticker creation should complete
-    // and call these methods
     expect(mockParams.sendStickerFromBuffer).toHaveBeenCalled();
     expect(mockParams.sendSucessReact).toHaveBeenCalled();
-  }, 60000); // 60 second timeout for AI processing
+  });
 });

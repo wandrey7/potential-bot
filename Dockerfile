@@ -15,13 +15,11 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci --omit=dev
 
 COPY . .
 
 RUN npx prisma generate
-
-RUN npm prune --production
 
 FROM node:22-slim AS production
 
