@@ -118,6 +118,7 @@ export const sendWelcomeMessage = async (socket, groupJid, newMember) => {
 
     // Fetch group information from database
     let groupName = "Grupo";
+    let groupMetadata = null;
     try {
       const group = await prisma.group.findUnique({
         where: { groupJid },
@@ -132,6 +133,21 @@ export const sendWelcomeMessage = async (socket, groupJid, newMember) => {
         error: error.message,
         groupJid,
       });
+    }
+
+    // Fallback to WhatsApp group subject if DB name is not available
+    if (groupName === "Grupo") {
+      try {
+        groupMetadata = await socket.groupMetadata(groupJid);
+        if (groupMetadata?.subject) {
+          groupName = groupMetadata.subject;
+        }
+      } catch (metadataError) {
+        appLogger.warn("Could not fetch group metadata for group name %o", {
+          error: metadataError.message,
+          groupJid,
+        });
+      }
     }
 
     // Get welcome template
@@ -159,7 +175,9 @@ export const sendWelcomeMessage = async (socket, groupJid, newMember) => {
 
     // Check if bot has permission to send messages in the group
     try {
-      const groupMetadata = await socket.groupMetadata(groupJid);
+      if (!groupMetadata) {
+        groupMetadata = await socket.groupMetadata(groupJid);
+      }
       const botJid = socket.user?.id?.replace(":0", "");
 
       // Check if group is in announcement mode and bot is not admin
