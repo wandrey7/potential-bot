@@ -1,4 +1,15 @@
-FROM node:22
+FROM node:22-slim AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    build-essential \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    openssl \
+ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -10,8 +21,23 @@ COPY . .
 
 RUN npx prisma generate
 
-RUN apt-get update && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+RUN npm prune --production
+
+FROM node:22-slim AS production
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libcairo2 \
+    libpango-1.0-0 \
+    libjpeg62-turbo \
+    libgif7 \
+    librsvg2-2 \
+    libexpat1 \
+    openssl \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /app .
 
 CMD ["node", "index.js"]

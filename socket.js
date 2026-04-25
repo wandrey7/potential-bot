@@ -3,6 +3,7 @@ import makeWASocket, {
   fetchLatestBaileysVersion,
   useMultiFileAuthState,
 } from "baileys";
+import { existsSync, rmSync } from "fs";
 import NodeCache from "node-cache";
 import path from "path";
 import QRCode from "qrcode";
@@ -14,6 +15,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const groupCache = new NodeCache({
   /* ... */
 });
+
+// Reconnection attempt counter
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 10;
 
 // onReady will be invoked once per socket instance (initial + every reconnect)
 export const connect = async (onReady) => {
@@ -70,19 +75,57 @@ export const connect = async (onReady) => {
 
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
-      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+      const isLoggedOut = statusCode === DisconnectReason.loggedOut;
 
-      if (shouldReconnect) {
-        appLogger.info("Connection closed, reconnecting...");
-        appLogger.info("Reason: %s", DisconnectReason[statusCode] || "unknown");
+      reconnectAttempts++;
+      appLogger.info(
+        "Connection closed (attempt %d/%d), status: %s",
+        reconnectAttempts,
+        MAX_RECONNECT_ATTEMPTS,
+        statusCode
+      );
+
+      if (isLoggedOut && reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        // Only clear auth after MAX attempts
+        appLogger.error(
+          "Max reconnect attempts reached (%d) - clearing auth state",
+          MAX_RECONNECT_ATTEMPTS
+        );
+
+        const authDir = path.resolve(__dirname, "assets", "auth", "baileys");
+        if (existsSync(authDir)) {
+          try {
+            rmSync(authDir, { recursive: true, force: true });
+            appLogger.info("Auth state cleared successfully");
+          } catch (error) {
+            appLogger.error("Failed to clear auth state: %s", error.message);
+          }
+        }
+
+        reconnectAttempts = 0; // Reset counter after clearing
+        appLogger.info("Restarting connection with clean state...");
         setTimeout(async () => {
-          await connect(onReady);
-        }, 5000);
+          try {
+            await connect(onReady);
+          } catch (error) {
+            appLogger.error("Failed to restart connection: %s", error.message);
+          }
+        }, 3000);
       } else {
-        appLogger.error("Logged out");
+        // Try to reconnect without clearing auth
+        const delay = Math.min(5000 * reconnectAttempts, 30000); // Exponential backoff, max 30s
+        appLogger.info("Attempting to reconnect in %dms...", delay);
+        setTimeout(async () => {
+          try {
+            await connect(onReady);
+          } catch (error) {
+            appLogger.error("Reconnection failed: %s", error.message);
+          }
+        }, delay);
       }
     } else if (connection === "open") {
-      appLogger.info("Connected successfully!");
+      reconnectAttempts = 0; // Reset counter on successful connection
+      appLogger.info("✅ Socket conectado, registrando listeners...");
     }
   });
 

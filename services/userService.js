@@ -99,7 +99,17 @@ export const userRouletteToday = async (senderJid, groupJid) => {
         user: { senderJid: senderJid },
         group: { groupJid: groupJid },
       },
+      select: { roulettes: true },
     });
+
+    if (!userGroup) {
+      appLogger.warn(
+        "UserGroup not found for groupJid: %s, senderJid: %s. Assuming roulette can be played.",
+        groupJid,
+        senderJid
+      );
+      return false;
+    }
 
     return userGroup.roulettes >= 3;
   } catch (error) {
@@ -139,6 +149,45 @@ export const incrementUserStoleToday = async (senderJid, groupJid) => {
   }
 };
 
+/** * Create a UserGroup entry if it does not exist.
+ * @param {string} senderJid - The sender's JID.
+ * @param {string} groupJid - The group's JID.
+ */
+export const createUserGroupIfNotExists = async (senderJid, groupJid) => {
+  if (!senderJid || !groupJid) {
+    return;
+  }
+  try {
+    const user = await prisma.user.findUnique({ where: { senderJid } });
+    const group = await prisma.group.findUnique({ where: { groupJid } });
+
+    if (!user || !group) {
+      return;
+    }
+
+    await prisma.userGroup.upsert({
+      where: {
+        userId_groupId: {
+          userId: user.id,
+          groupId: group.id,
+        },
+      },
+      update: {},
+      create: {
+        userId: user.id,
+        groupId: group.id,
+      },
+    });
+  } catch (error) {
+    appLogger.error("Error upserting userGroup %o", {
+      error: error.message,
+      stack: error.stack,
+      senderJid,
+      groupJid,
+    });
+  }
+};
+
 /**
  * Increment the roulette count for a user in a specific group.
  * @param {string} senderJid - The sender's JID.
@@ -146,6 +195,9 @@ export const incrementUserStoleToday = async (senderJid, groupJid) => {
  */
 export const incrementUserRoulette = async (senderJid, groupJid) => {
   try {
+    if (!senderJid || !groupJid) {
+      return;
+    }
     await prisma.userGroup.updateMany({
       where: {
         user: { senderJid: senderJid },
@@ -174,6 +226,9 @@ export const incrementUserRoulette = async (senderJid, groupJid) => {
  */
 export const pointsToUser = async (senderJid, groupJid, points, increment) => {
   try {
+    if (!senderJid || !groupJid) {
+      return;
+    }
     const incrementValue = increment === false ? -points : points;
     await prisma.userGroup.updateMany({
       where: {
@@ -191,5 +246,36 @@ export const pointsToUser = async (senderJid, groupJid, points, increment) => {
       senderJid,
       points,
     });
+  }
+};
+
+/**
+ * Get the current points of a user in a specific group.
+ * @param {string} senderJid - The sender's JID.
+ * @param {string} groupJid - The group's JID.
+ * @returns {Promise<number>} - The current points of the user in the group.
+ */
+export const getUserPoints = async (senderJid, groupJid) => {
+  try {
+    if (!senderJid || !groupJid) {
+      return 0;
+    }
+    const userGroup = await prisma.userGroup.findFirst({
+      where: {
+        user: { senderJid: senderJid },
+        group: { groupJid: groupJid },
+      },
+      select: { points: true },
+    });
+
+    return userGroup ? userGroup.points : 0;
+  } catch (error) {
+    appLogger.error("Error getting user points %o", {
+      error: error.message,
+      stack: error.stack,
+      senderJid,
+      groupJid,
+    });
+    return 0;
   }
 };

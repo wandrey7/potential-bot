@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const config = {
-  TIMEOUT_IN_MILI_BY_EVENT: 700,
+  TIMEOUT_IN_MILI_BY_EVENT: 150,
 };
 
 export const OWNER_NUMBER = process.env.OWNER_NUMBER || "";

@@ -1,9 +1,11 @@
 import { PREFIX } from "../../config/config.js";
 import {
+  getUserPoints,
   incrementUserStoleToday,
   pointsToUser,
   userStoleToday,
 } from "../../services/userService.js";
+import { getUserDisplayName } from "../../utils/baileysHelpers.js";
 import { genAleatoryNumbers } from "../../utils/helpers.js";
 
 export default {
@@ -19,9 +21,12 @@ export default {
     senderJid,
     remoteJid,
     webMessage,
+    sendErrorReply,
   }) => {
-    const randomNumber = genAleatoryNumbers(0, 100);
-    const userStoleTd = await userStoleToday(senderJid, remoteJid);
+    if (remoteJid.endsWith("@g.us") === false) {
+      await sendErrorReply("Este comando só pode ser usado em grupos!");
+      return;
+    }
 
     let targetUserJid = replyJid;
 
@@ -38,22 +43,40 @@ export default {
         "Você precisa responder a uma mensagem ou marcar (@) o usuário para roubar!"
       );
     }
+    const groupJid = remoteJid.split("@")[0];
 
-    if (userStoleTd) {
+    const hasStolenToday = await userStoleToday(senderJid, groupJid);
+
+    if (hasStolenToday) {
       return await sendWarningReply(
         "você já roubou pontos hoje neste grupo. Tente novamente amanhã!"
       );
-    } else {
-      await pointsToUser(senderJid, remoteJid, randomNumber, true);
-      await pointsToUser(targetUserJid, remoteJid, randomNumber, false);
-      await incrementUserStoleToday(senderJid, remoteJid);
+    }
 
-      const userDisplayNumber = targetUserJid.split("@")[0];
+    const amountToSteal = genAleatoryNumbers(0, 100);
+    const targetBalance = await getUserPoints(targetUserJid, remoteJid);
 
-      await sendMessageWithMention(
-        `Você roubou com sucesso ${randomNumber} pontos do usuário ${userDisplayNumber}!`,
-        targetUserJid
+    if (targetBalance < amountToSteal) {
+      return await sendWarningReply(
+        `Esse usuário não tem pontos suficientes para roubar! Ele tem ${targetBalance} pontos e você tentou roubar ${amountToSteal} pontos.`
       );
     }
+
+    Promise.all([
+      await pointsToUser(senderJid, groupJid, amountToSteal, true),
+      await pointsToUser(targetUserJid, groupJid, amountToSteal, false),
+      await incrementUserStoleToday(senderJid, groupJid),
+    ]);
+
+    const userDisplayName = await getUserDisplayName(
+      targetUserJid,
+      webMessage,
+      remoteJid
+    );
+
+    await sendMessageWithMention(
+      `Você roubou com sucesso ${amountToSteal} pontos do usuário ${userDisplayName}!`,
+      targetUserJid
+    );
   },
 };

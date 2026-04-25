@@ -4,7 +4,7 @@ on:
     branches: ["main"]
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -22,11 +22,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
         with:
+          context: .
           push: true
-          tags: wanbit:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/${{ github.repository_owner }}/potential-bot:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/${{ github.repository_owner }}/potential-bot:buildcache,mode=max
+          tags: |
+            ${{ secrets.DOCKER_REGISTRY }}/${{ github.repository_owner }}/potential-bot:${{ github.ref_name }}
+            ${{ secrets.DOCKER_REGISTRY }}/${{ github.repository_owner }}/potential-bot:latest
 
       - name: Notificar para fazer o deploy
         run: >
