@@ -9,6 +9,7 @@ import path from "path";
 import QRCode from "qrcode";
 import { fileURLToPath } from "url";
 import { appLogger, baileysLogger } from "./config/logs.js";
+import { OWNER_NUMBER } from "./config/config.js";
 
 // Resolve the directory of this file (robust under PM2/Docker/ESM)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -19,11 +20,12 @@ const groupCache = new NodeCache({
 // Reconnection attempt counter
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 10;
+let pairingCodeRequested = false;
 
 // onReady will be invoked once per socket instance (initial + every reconnect)
 export const connect = async (onReady) => {
   const { state, saveCreds } = await useMultiFileAuthState(
-    path.resolve(__dirname, "assets", "auth", "baileys")
+    path.resolve(__dirname, "assets", "auth", "baileys"),
   );
   const { version } = await fetchLatestBaileysVersion();
 
@@ -49,6 +51,32 @@ export const connect = async (onReady) => {
     }
   }
 
+  if (!pairingCodeRequested && !state?.creds?.registered) {
+    const ownerNumber = OWNER_NUMBER.replace(/\D/g, "");
+
+    if (!ownerNumber) {
+      appLogger.warn(
+        "OWNER_NUMBER nao configurado. Nao foi possivel gerar pairing code.",
+      );
+    } else if (typeof sock?.requestPairingCode === "function") {
+      pairingCodeRequested = true;
+      try {
+        const pairingCode = await sock.requestPairingCode(ownerNumber);
+        console.log("\n\x1b[36m%s\x1b[0m", "PAIRING CODE:");
+        console.log("\x1b[1m%s\x1b[0m", pairingCode);
+        console.log(
+          "\x1b[33m%s\x1b[0m",
+          "Use este codigo em WhatsApp > Vincular dispositivo",
+        );
+        appLogger.info("Pairing code gerado com sucesso.");
+      } catch (error) {
+        appLogger.error("Falha ao solicitar pairing code: %s", error.message);
+      }
+    } else {
+      appLogger.warn("Pairing code nao suportado nesta versao do Baileys.");
+    }
+  }
+
   sock.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect, qr } = update;
 
@@ -60,12 +88,12 @@ export const connect = async (onReady) => {
         });
         console.log(
           "\n\x1b[32m%s\x1b[0m",
-          "SCAN THE QR CODE BELOW TO CONNECT:"
+          "SCAN THE QR CODE BELOW TO CONNECT:",
         );
         console.log(qrCode);
         console.log(
           "\x1b[33m%s\x1b[0m",
-          "Note: QR code will expire in 60 seconds"
+          "Note: QR code will expire in 60 seconds",
         );
         appLogger.info("QR Code received, scan it to authenticate.");
       } catch (error) {
@@ -82,14 +110,14 @@ export const connect = async (onReady) => {
         "Connection closed (attempt %d/%d), status: %s",
         reconnectAttempts,
         MAX_RECONNECT_ATTEMPTS,
-        statusCode
+        statusCode,
       );
 
       if (isLoggedOut && reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
         // Only clear auth after MAX attempts
         appLogger.error(
           "Max reconnect attempts reached (%d) - clearing auth state",
-          MAX_RECONNECT_ATTEMPTS
+          MAX_RECONNECT_ATTEMPTS,
         );
 
         const authDir = path.resolve(__dirname, "assets", "auth", "baileys");
@@ -101,6 +129,8 @@ export const connect = async (onReady) => {
             appLogger.error("Failed to clear auth state: %s", error.message);
           }
         }
+
+        pairingCodeRequested = false;
 
         reconnectAttempts = 0; // Reset counter after clearing
         appLogger.info("Restarting connection with clean state...");
