@@ -80,7 +80,7 @@ export const connect = async (onReady) => {
   sock.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect, qr } = update;
 
-    if (qr) {
+    if (qr && !state?.creds?.registered) {
       try {
         const qrCode = await QRCode.toString(qr, {
           type: "terminal",
@@ -99,6 +99,8 @@ export const connect = async (onReady) => {
       } catch (error) {
         appLogger.error("Error generating QR code: %s", error.message);
       }
+    } else if (qr && state?.creds?.registered) {
+      appLogger.info("QR code ignorado: credenciais ja registradas.");
     }
 
     if (connection === "close") {
