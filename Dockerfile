@@ -11,8 +11,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     python3 \
     python3-pip \
+    pipx \
  && rm -rf /var/lib/apt/lists/* \
- && pip install --no-cache-dir yt-dlp
+ && pipx install yt-dlp
+
+ENV PATH="/root/.local/bin:$PATH"
 
 WORKDIR /app
 
@@ -37,8 +40,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     python3 \
     python3-pip \
+    pipx \
  && rm -rf /var/lib/apt/lists/* \
- && pip install --no-cache-dir yt-dlp
+ && pipx install yt-dlp
+
+ENV PATH="/root/.local/bin:$PATH"
 
 WORKDIR /app
 
