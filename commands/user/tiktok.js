@@ -31,7 +31,7 @@ export default {
         return;
       }
 
-      const url = args.join(" ").replace(/\s+/g, "");
+      const url = args.join("/").replace(/\s+/g, "").replace(/\/+/g, "/").replace(":/", "://")
 
       if (!TIKTOK_REGEX.test(url)) {
         await sendErrorReply(
