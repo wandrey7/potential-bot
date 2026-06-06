@@ -31,7 +31,7 @@ export default {
         return;
       }
 
-      const url = args[0];
+      const url = args.join(" ").replace(/\s+/g, "");
 
       if (!TIKTOK_REGEX.test(url)) {
         await sendErrorReply(
@@ -41,16 +41,9 @@ export default {
       }
 
       // Create user if doesn't exist
-      let user = await prisma.user.findUnique({
+      const user = await prisma.user.findUnique({
         where: { senderJid },
       });
-
-      if (!user) {
-        // Create user if doesn't exist
-        user = await prisma.user.create({
-          data: { senderJid },
-        });
-      }
 
       if (user.lastDownload) {
         const timeSinceLastDownload = Date.now() - user.lastDownload.getTime();
@@ -157,7 +150,7 @@ async function downloadVideo(url) {
 
     const proc = execFile(
       "yt-dlp",
-      ["-f", "best[filesize<100M]", "-o", "-", url],
+      ["-f", "best[filesize<100M]/best", "-o", "-", url],
       { maxBuffer: 200 * 1024 * 1024 }, // 200MB buffer for large files
       (error) => {
         if (error) {
