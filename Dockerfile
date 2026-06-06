@@ -50,4 +50,7 @@ WORKDIR /app
 
 COPY --from=builder /app .
 
-CMD ["node", "index.js"]
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
+
+CMD ["./entrypoint.sh"]
