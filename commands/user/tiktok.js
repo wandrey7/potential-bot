@@ -151,7 +151,7 @@ async function downloadVideo(url) {
     const proc = execFile(
       "yt-dlp",
       ["-f", "best[filesize<100M]/best", "-o", "-", url],
-      { maxBuffer: 200 * 1024 * 1024 }, // 200MB buffer for large files
+      { maxBuffer: 200 * 1024 * 1024, encoding: 'buffer' }, // 200MB buffer for large files
       (error) => {
         if (error) {
           appLogger.error("Video download error: %s", error.message);
