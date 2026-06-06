@@ -9,7 +9,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgif-dev \
     librsvg2-dev \
     openssl \
- && rm -rf /var/lib/apt/lists/*
+    python3 \
+    python3-pip \
+ && rm -rf /var/lib/apt/lists/* \
+ && pip install --no-cache-dir yt-dlp
 
 WORKDIR /app
 
@@ -32,7 +35,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     librsvg2-2 \
     libexpat1 \
     openssl \
- && rm -rf /var/lib/apt/lists/*
+    python3 \
+    python3-pip \
+ && rm -rf /var/lib/apt/lists/* \
+ && pip install --no-cache-dir yt-dlp
 
 WORKDIR /app
 

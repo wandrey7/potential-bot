@@ -15,6 +15,7 @@ model User {
   name          String?
   senderJid     String      @unique
   hasPermission Boolean     @default(false)
+  lastDownload  DateTime?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   userGroups    UserGroup[]
