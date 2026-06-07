@@ -1,127 +1,62 @@
-import { existsSync, mkdirSync } from "fs";
 import path from "path";
 import P from "pino";
 
-const __dirname = path.resolve();
+const LOG_DIR = path.resolve("assets", "logs");
 
-const logFilePath = path.resolve(__dirname, "assets", "logs", "log");
-const errorLogFilePath = path.resolve(__dirname, "assets", "logs", "error");
-const logDirPath = path.resolve(__dirname, "assets", "logs");
+const ROLL_DEFAULTS = {
+  frequency: "daily",
+  size: "10M",
+  mkdir: true,
+};
 
-// Create logs directory if it doesn't exist (Pino doesn't create it automatically)
-if (!existsSync(logDirPath)) {
-  mkdirSync(logDirPath, { recursive: true });
-}
+const infoFileTarget = {
+  target: "pino-roll",
+  level: "info",
+  options: {
+    file: path.resolve(LOG_DIR, "log"),
+    limit: { count: 7 },
+    ...ROLL_DEFAULTS,
+  },
+};
 
-// Logger base with the lowest level to capture eveything
-const baseLogger = P(
+const errorFileTarget = {
+  target: "pino-roll",
+  level: "error",
+  options: {
+    file: path.resolve(LOG_DIR, "error"),
+    limit: { count: 30 },
+    ...ROLL_DEFAULTS,
+  },
+};
+
+const prettyTarget = (level) => ({
+  target: "pino-pretty",
+  level,
+  options: {
+    colorize: true,
+    translateTime: "SYS:standard",
+    ignore: "pid,hostname,service",
+  },
+});
+
+const appLogger = P(
+  { level: "info" },
   P.transport({
-    targets: [
-      {
-        target: "pino-roll",
-        level: "info",
-        options: {
-          file: logFilePath,
-          frequency: "daily",
-          size: "10M",
-          limit: {
-            count: 7,
-          },
-          mkdir: true,
-        },
-      },
-      {
-        target: "pino-roll",
-        level: "error",
-        options: {
-          file: errorLogFilePath,
-          frequency: "daily",
-          size: "10M",
-          limit: {
-            count: 30,
-          },
-          mkdir: true,
-        },
-      },
-      {
-        target: "pino-pretty",
-        level: "info",
-        options: {
-          colorize: true,
-          translateTime: "SYS:standard",
-          ignore: "pid,hostname,service",
-          hideObject: false,
-        },
-      },
-    ],
+    targets: [infoFileTarget, errorFileTarget, prettyTarget("info")],
   })
 );
 
-// Logger for Baileys - only shows errors in the console
 const baileysLogger = P(
+  { level: "error" },
   P.transport({
-    targets: [
-      {
-        target: "pino-roll",
-        level: "error",
-        options: {
-          file: errorLogFilePath,
-          frequency: "daily",
-          size: "10M",
-          limit: {
-            count: 30,
-          },
-          mkdir: true,
-        },
-      },
-      {
-        target: "pino-pretty",
-        level: "error",
-        options: {
-          colorize: true,
-          translateTime: "SYS:standard",
-          ignore: "pid,hostname,service",
-          hideObject: false,
-        },
-      },
-    ],
+    targets: [errorFileTarget, prettyTarget("error")],
   })
 );
 
-// Logger for the application - shows info in the console
-const appLogger = baseLogger.child({ level: "info" });
-
-// Logger that only writes to files, without console output
 const fileLogger = P(
+  { level: "info" },
   P.transport({
-    targets: [
-      {
-        target: "pino-roll",
-        level: "info",
-        options: {
-          file: logFilePath,
-          frequency: "daily",
-          size: "10M",
-          limit: {
-            count: 7,
-          },
-          mkdir: true,
-        },
-      },
-      {
-        target: "pino-roll",
-        level: "error",
-        options: {
-          file: errorLogFilePath,
-          frequency: "daily",
-          size: "10M",
-          limit: {
-            count: 30,
-          },
-          mkdir: true,
-        },
-      },
-    ],
+    targets: [infoFileTarget, errorFileTarget],
   })
 );
 
