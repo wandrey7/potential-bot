@@ -130,14 +130,18 @@ export const connect = async (onReady) => {
 
       switch (statusCode) {
         case DisconnectReason.loggedOut:
-          clearAuth();
-          reconnectAttempts = 0;
-          scheduleReconnect(3_000);
-          break;
         case DisconnectReason.badSession:
           clearAuth();
-          reconnectAttempts = 0;
-          scheduleReconnect(3_000);
+          reconnectAttempts++;
+          if (reconnectAttempts > MAX_RECONNECT_ATTEMPTS) {
+            appLogger.error(
+              "Reconnect limit reached. Cooling down for 2 min...",
+            );
+            reconnectAttempts = 0;
+            scheduleReconnect(120_000);
+          } else {
+            scheduleReconnect(3_000);
+          }
           break;
         case DisconnectReason.restartRequired:
           scheduleReconnect(1_000);
