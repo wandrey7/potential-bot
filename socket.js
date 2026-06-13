@@ -9,7 +9,6 @@ import path from "path";
 import QRCode from "qrcode";
 import { fileURLToPath } from "url";
 import { appLogger, baileysLogger } from "./config/logs.js";
-import { OWNER_NUMBER } from "./config/config.js";
 
 // Resolve the directory of this file (robust under PM2/Docker/ESM)
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -20,7 +19,6 @@ const groupCache = new NodeCache({
 // Reconnection attempt counter
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 5;
-let pairingCodeRequested = false;
 let listenersRegistered = false;
 
 // onReady will be invoked once per socket instance (initial + every reconnect)
@@ -41,32 +39,6 @@ export const connect = async (onReady) => {
     keepAliveIntervalMs: 30_000,
   });
 
-  if (!pairingCodeRequested && !state?.creds?.registered) {
-    const ownerNumber = OWNER_NUMBER.replace(/\D/g, "");
-
-    if (!ownerNumber) {
-      appLogger.warn(
-        "OWNER_NUMBER nao configurado. Nao foi possivel gerar pairing code.",
-      );
-    } else if (typeof sock?.requestPairingCode === "function") {
-      pairingCodeRequested = true;
-      try {
-        const pairingCode = await sock.requestPairingCode(ownerNumber);
-        console.log("\n\x1b[36m%s\x1b[0m", "PAIRING CODE:");
-        console.log("\x1b[1m%s\x1b[0m", pairingCode);
-        console.log(
-          "\x1b[33m%s\x1b[0m",
-          "Use este codigo em WhatsApp > Vincular dispositivo",
-        );
-        appLogger.info("Pairing code gerado com sucesso.");
-      } catch (error) {
-        appLogger.error("Falha ao solicitar pairing code: %s", error.message);
-      }
-    } else {
-      appLogger.warn("Pairing code nao suportado nesta versao do Baileys.");
-    }
-  }
-
   const clearAuth = () => {
     const authDir = path.resolve(__dirname, "assets", "auth", "baileys");
     if (existsSync(authDir)) {
@@ -77,7 +49,6 @@ export const connect = async (onReady) => {
         appLogger.error("Failed to clear auth state: %s", err.message);
       }
     }
-    pairingCodeRequested = false;
     listenersRegistered = false;
   };
 
