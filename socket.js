@@ -3,6 +3,7 @@ import makeWASocket, {
   fetchLatestBaileysVersion,
   useMultiFileAuthState,
 } from "baileys";
+import { existsSync, rmSync } from "fs";
 import NodeCache from "node-cache";
 import path from "path";
 import QRCode from "qrcode";
@@ -18,6 +19,7 @@ const groupCache = new NodeCache({
 // Reconnection attempt counter
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 10;
+let listenersRegistered = false;
 
 // onReady will be invoked once per socket instance (initial + every reconnect)
 export const connect = async (onReady) => {
@@ -34,19 +36,32 @@ export const connect = async (onReady) => {
     browser: ["Chrome (Linux)", "", ""],
     cachedGroupMetadata: async (jid) => groupCache.get(jid),
     markOnlineOnConnect: false,
+    keepAliveIntervalMs: 30_000,
   });
 
-  // Register app listeners for this socket instance immediately
-  if (typeof onReady === "function") {
-    try {
-      await onReady(sock);
-    } catch (err) {
-      appLogger.error("Error running onReady for socket %o", {
-        error: err?.message,
-        stack: err?.stack,
-      });
+  const clearAuth = () => {
+    const authDir = path.resolve(__dirname, "assets", "auth", "baileys");
+    if (existsSync(authDir)) {
+      try {
+        rmSync(authDir, { recursive: true, force: true });
+        appLogger.info("Auth state cleared.");
+      } catch (err) {
+        appLogger.error("Failed to clear auth state: %s", err.message);
+      }
     }
-  }
+    listenersRegistered = false;
+  };
+
+  const scheduleReconnect = (ms) => {
+    appLogger.info("Reconnecting in %dms...", ms);
+    setTimeout(async () => {
+      try {
+        await connect(onReady);
+      } catch (err) {
+        appLogger.error("Reconnection failed: %s", err.message);
+      }
+    }, ms);
+  };
 
   sock.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect, qr } = update;
