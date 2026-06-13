@@ -4,9 +4,11 @@ import { onGroupParticipantsUpdate } from "./middleware/onGroupParticipantsUpdat
 import { onMessageUpsert } from "./middleware/onMessageUpsert.js";
 import { readCommandImports } from "./utils/extractDataFromMessage.js";
 
-export const loader = async (socket) => {
-  await readCommandImports();
-  appLogger.info("✅ Commands pre-loaded into cache");
+export const loader = async (socket, alreadyLoaded = false) => {
+  if (!alreadyLoaded) {
+    await readCommandImports();
+    appLogger.info("✅ Commands pre-loaded into cache");
+  }
 
   // Ensure we don't accumulate duplicate listeners on reconnect
   socket.ev.removeAllListeners?.("messages.upsert");
