@@ -3,12 +3,10 @@ import makeWASocket, {
   fetchLatestBaileysVersion,
   useMultiFileAuthState,
 } from "baileys";
-import { existsSync, rmSync } from "fs";
 import NodeCache from "node-cache";
 import path from "path";
 import QRCode from "qrcode";
 import { fileURLToPath } from "url";
-import { OWNER_NUMBER } from "./config/config.js";
 import { appLogger, baileysLogger } from "./config/logs.js";
 
 // Resolve the directory of this file (robust under PM2/Docker/ESM)
@@ -19,9 +17,7 @@ const groupCache = new NodeCache({
 
 // Reconnection attempt counter
 let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 5;
-let pairingCodeRequested = false;
-let listenersRegistered = false;
+const MAX_RECONNECT_ATTEMPTS = 10;
 
 // onReady will be invoked once per socket instance (initial + every reconnect)
 export const connect = async (onReady) => {
@@ -38,59 +34,19 @@ export const connect = async (onReady) => {
     browser: ["Chrome (Linux)", "", ""],
     cachedGroupMetadata: async (jid) => groupCache.get(jid),
     markOnlineOnConnect: false,
-    keepAliveIntervalMs: 30_000,
   });
 
-  if (!pairingCodeRequested && !state?.creds?.registered) {
-    const ownerNumber = OWNER_NUMBER.replace(/\D/g, "");
-
-    if (!ownerNumber) {
-      appLogger.warn(
-        "OWNER_NUMBER nao configurado. Nao foi possivel gerar pairing code.",
-      );
-    } else if (typeof sock?.requestPairingCode === "function") {
-      pairingCodeRequested = true;
-      try {
-        const pairingCode = await sock.requestPairingCode(ownerNumber);
-        console.log("\n\x1b[36m%s\x1b[0m", "PAIRING CODE:");
-        console.log("\x1b[1m%s\x1b[0m", pairingCode);
-        console.log(
-          "\x1b[33m%s\x1b[0m",
-          "Use este codigo em WhatsApp > Vincular dispositivo",
-        );
-        appLogger.info("Pairing code gerado com sucesso.");
-      } catch (error) {
-        appLogger.error("Falha ao solicitar pairing code: %s", error.message);
-      }
-    } else {
-      appLogger.warn("Pairing code nao suportado nesta versao do Baileys.");
+  // Register app listeners for this socket instance immediately
+  if (typeof onReady === "function") {
+    try {
+      await onReady(sock);
+    } catch (err) {
+      appLogger.error("Error running onReady for socket %o", {
+        error: err?.message,
+        stack: err?.stack,
+      });
     }
   }
-
-  const clearAuth = () => {
-    const authDir = path.resolve(__dirname, "assets", "auth", "baileys");
-    if (existsSync(authDir)) {
-      try {
-        rmSync(authDir, { recursive: true, force: true });
-        appLogger.info("Auth state cleared.");
-      } catch (err) {
-        appLogger.error("Failed to clear auth state: %s", err.message);
-      }
-    }
-    pairingCodeRequested = false;
-    listenersRegistered = false;
-  };
-
-  const scheduleReconnect = (ms) => {
-    appLogger.info("Reconnecting in %dms...", ms);
-    setTimeout(async () => {
-      try {
-        await connect(onReady);
-      } catch (err) {
-        appLogger.error("Reconnection failed: %s", err.message);
-      }
-    }, ms);
-  };
 
   sock.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect, qr } = update;
